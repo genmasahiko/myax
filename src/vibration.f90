@@ -1,0 +1,294 @@
+program vibration
+        implicit none
+        integer, parameter :: dp = kind(0.0d0)
+
+        real(dp), allocatable :: f_plus(:,:), f_minus(:,:), force(:,:), hes(:,:), mass_hes(:,:), mass(:,:)
+        real(dp), allocatable :: omega(:), energy(:), wavenum(:), omega2(:), eig_vec(:,:)
+        integer :: i, j, k, nat, ios, l
+        character(100) :: filename, line, inp, input
+        real(dp) :: dx, zpe
+        real(dp) :: eigen_re(9), eigen_im(9)
+        real(dp) :: change_units
+
+
+        ! from wikipedia ( It should be revised )
+        real(dp), parameter :: Ry_to_eV = 13.605684958731
+        real(dp), parameter :: ang_to_Bohr = 1.8897259886
+        real(dp), parameter :: amu_to_kg = 1.6603145d-27
+        real(dp), parameter :: kg_to_me = 1/9.1093837015d-31
+        real(dp), parameter :: pi = 3.14159265358979323846
+        real(dp), parameter :: hbar = 6.582119569d-16
+        real(dp), parameter :: c = 299792458
+
+        real(dp) :: amu_to_me = amu_to_kg * kg_to_me
+
+        inp = 'vib/disp_1+/in'
+        nat = get_nat(inp)
+
+        write(*,*) 'shift?'
+        read(*,*) dx
+
+        allocate( f_plus(9, 9), f_minus(9, 9) ) 
+        allocate( force(nat, 9) )
+
+        f_plus = 0
+        f_minus = 0
+
+        force = 0
+        ! for disp_+
+        do i = 1, 9
+                write(filename, *) i
+                filename = 'vib/disp_'//trim(adjustl(filename))//'+'
+                input = trim(adjustl(filename))//'/out'
+
+                open(10, file=input, status='old')
+                do
+                        read(10, '(a)', iostat=ios) line
+                        if( index(line, 'Forces acting on atoms') > 0 ) exit
+                        if( ios == -1 ) write(*,*) 'forces not printed!'
+                end do
+
+                read(10, '(a)') ! read empty line
+
+                do j = 1, nat
+                        read(10, '(a)') line
+                        line = line( index(line, '=') + 1:)
+                        line = trim(adjustl(line))
+                        read(line, *) ( force(j, k), k = 1, 3 )
+                end do
+
+                l = 0
+                do j = 1, 3
+                        do k = 1, 3
+                                l = l + 1
+                                f_plus(i, l) = force( nat - 2 + j - 1, k )
+                        end do
+                end do
+        end do
+
+        force = 0
+
+        ! for disp_-
+        do i = 1, 9
+                write(filename, *) i
+                filename = 'vib/disp_'//trim(adjustl(filename))//'-'
+                input = trim(adjustl(filename))//'/out'
+
+                open(10, file=input, status='old')
+                do
+                        read(10, '(a)', iostat=ios) line
+                        if( index(line, 'Forces acting on atoms') > 0 ) exit
+                        if( ios == -1 ) write(*,*) 'forces not printed!'
+                end do
+
+                read(10, '(a)') ! read empty line
+
+                do j = 1, nat
+                        read(10, '(a)') line
+                        line = line( index(line, '=') + 1:)
+                        line = trim(adjustl(line))
+                        read(line, *) ( force(j, k), k = 1, 3 )
+                end do
+
+                l = 0
+                do j = 1, 3
+                        do k = 1, 3
+                                l = l + 1
+                                f_minus(i, l) = force( nat - 2 + j - 1, k )
+                        end do
+                end do
+        end do
+
+        deallocate( force )
+
+        allocate( hes(9,9) )
+        do i = 1, 9
+                do j = 1, 9
+                        hes(i, j) = ( f_minus(i, j) - f_plus(i, j) ) / (2.0_dp*dx)
+                end do
+        end do
+
+        deallocate( f_plus, f_minus )
+
+        allocate( mass(9,9) )
+        call get_mass_matrix(inp, nat, mass)
+
+        allocate( mass_hes(9,9) )
+
+        do i = 1, 9
+                do j = 1, 9
+                        mass_hes(i, j) = hes(i, j) / mass(i, j)
+                end do
+        end do
+
+        deallocate( mass, hes )
+
+        allocate( eig_vec(9,9) )
+
+        call diag(mass_hes, eigen_re, eigen_im, eig_vec)
+
+        deallocate(mass_hes)
+
+        !write(*,*) '-----eigen value (Re, Im) of mass weighted hessian----- '
+        !do i = 1, 9
+        !       write(*, '(2f20.10)') eigen_re(i), eigen_im(i)
+        !end do
+
+
+        ! To be revised
+
+        !do i = 1, 9
+        !       omega(i) = eigen_re(i) / ang_to_Bohr  / amu_to_me
+        !       omega(i) = dsqrt( dabs(eigen_re(i)) )
+        !       energy(i) = omega(i) * 0.50_dp
+        !       energy(i) = energy(i) * Ry_to_eV
+        !       omega(i) = ( 2.0_dp * dsqrt(2.0_dp) * omega(i) )  / 2.418884d-17
+        !       wavenum(i) = ( 2.0_dp * pi * omega(i) * 1.0d-2 ) / c
+        !end do
+
+        !write(*,*) 'ver.1 ----- wave number (cm-1) & energy (eV) of H2O vibration -----'
+        !do i = 1, 9
+        !        write(*, '(2f30.10)') wavenum(i), energy(i)
+        !end do
+
+        allocate(omega2(9), omega(9), energy(9), wavenum(9))
+
+        omega2 = 0.0_dp
+        omega = 0.0_dp
+        energy = 0.0_dp
+
+        do i = 1, 9
+                omega2(i) = ( eigen_re(i) * 2.179872d-18 / 5.29177249d-11 * 1.0d10 ) / 1.66054d-27
+                if (omega2(i) >= 0 ) then
+                        omega(i) = dsqrt(omega2(i))
+                else
+                        omega(i) = dsqrt(-omega2(i))
+                end if
+                wavenum(i) = omega(i) * 1.0d-2 / (2*pi*c)
+                energy(i) = wavenum(i) * 1.23984d-4
+        end do
+
+        zpe = 0.0
+        do i = 1, 9
+                if ( omega2(i) >= 0 ) then
+                        zpe = zpe + energy(i) * 0.5_dp
+                end if
+        end do
+
+        !deallocate( eigen_re, eigen_im )
+        
+        write(*,*) '----- wave number (cm-1) & energy (eV) of H2O vibration -----'
+        do i = 1, 9
+                if (omega2(i) >= 0 ) then
+                        write(*, '(2f30.10)') wavenum(i), energy(i)
+                else
+                        write(*, '(f30.10, a, f29.10, a)') wavenum(i), 'i', energy(i), 'i'
+                end if
+        end do
+
+        write(*,*) '----------'
+        write(*, '(a, f10.5, a6)') 'zero point energy = ', zpe, '(eV)'
+
+        write(*,*) '----- eigen vector -----'
+        do i = 1, 9
+                write(*, '(9f20.10)') ( eig_vec(i, j), j = 1, 9 )
+        end do
+
+
+
+
+contains
+        subroutine get_mass_matrix(filename, nat, mass)
+                implicit none
+
+                integer, parameter :: dp = kind(0.0d0)
+                character(100) :: filename, line
+                real(dp) :: mass(9,9)
+                integer :: ios, nat, i, j, k
+                character(100) :: symbol(19)
+                real(dp) :: m(9)
+
+
+                ! atomic weight from CIAAW of IUPAC
+                real(dp), parameter :: mass_H = 1.008, mass_O = 15.999
+
+
+                open(10, file=filename, status='old')
+
+                do
+                        read(10, '(a)', iostat=ios) line
+                        if ( ios == -1 ) exit
+
+                        if ( index(line, 'ATOMIC_POSITIONS') > 0 ) then
+                                do i = 1, nat
+                                        read(10, *) symbol(i)
+                                end do
+                                exit
+                        end if
+                end do
+
+                m = 0
+
+                j = 0
+                do i = nat - 2, nat
+                        if ( trim(symbol(i)) == 'H' ) then
+                                do k = 1, 3
+                                        j = j + 1
+                                        m(j) = dsqrt(mass_H) 
+                                end do
+                        else if ( trim(symbol(i)) == 'O' ) then
+                                do k = 1, 3
+                                        j = j + 1
+                                        m(j) = dsqrt(mass_O)
+                                end do
+                        end if
+                end do
+
+                close(10)
+
+                do i = 1, 9
+                        do j = 1, 9
+                                mass(i, j) = m(i) * m(j)
+                        end do
+                end do
+        end subroutine
+
+        function get_nat(filename)
+                implicit none
+
+                character(100) :: filename, line
+                character(5) :: dum1, dum2
+                integer :: get_nat
+
+                open(10, file=filename, status='old')
+
+                do
+                        read(10, '(a)') line
+                        if ( index(line, 'nat') > 0 ) then
+                                read(line, *) dum1, dum2, get_nat
+                                exit
+                        end if
+                end do
+
+                close(10)
+        end function
+
+        subroutine diag(matrix, eigen_re, eigen_im, vr)
+                implicit none
+
+                integer, parameter :: dp=kind(0.0d0)
+                real(dp) :: matrix(9, 9)
+
+                ! only for dgeev
+                integer :: info
+                real(dp), allocatable :: vl(:,:), work(:)
+                real(dp) :: vr(9,9)
+                real(dp) :: eigen_re(9), eigen_im(9)
+
+                allocate( vl(9,9), work(8*9) )
+                call dgeev('V', 'V', 9, matrix, 9, eigen_re, eigen_im, vl, 9, vr, 9, work, 8*9, info)
+                deallocate( vl, work )
+        end subroutine
+
+
+end program
