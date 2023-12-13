@@ -5,10 +5,16 @@ program vibration
         real(dp), allocatable :: f_plus(:,:), f_minus(:,:), force(:,:), hes(:,:), mass_hes(:,:), mass(:,:)
         real(dp), allocatable :: omega(:), energy(:), wavenum(:), omega2(:), eig_vec(:,:)
         integer :: i, j, k, nat, ios, l
-        character(100) :: filename, line, inp, input
+        character(100) :: filename, line, inp, input, output
         real(dp) :: dx, zpe
         real(dp) :: eigen_re(9), eigen_im(9)
         real(dp) :: change_units
+
+        character(100), allocatable :: atom_symbol(:)
+        real(dp), allocatable :: atom_position(:,:)
+
+        real(dp) :: surf_position
+        integer :: nat_surf
 
 
         ! from wikipedia ( It should be revised )
@@ -151,7 +157,7 @@ program vibration
         !        write(*, '(2f30.10)') wavenum(i), energy(i)
         !end do
 
-        allocate(omega2(9), omega(9), energy(9), wavenum(9))
+        allocate(omega2(9), omega(9), energy(9), wavenum(9) )
 
         omega2 = 0.0_dp
         omega = 0.0_dp
@@ -176,26 +182,62 @@ program vibration
         end do
 
         !deallocate( eigen_re, eigen_im )
+
+        allocate( atom_symbol(nat), atom_position(nat, 3) )
+
+        call read_output('out' , nat, atom_symbol, atom_position)
+
+
+        ! calculate slab surface position for anime.x
+        surf_position = 0.0_dp
+        nat_surf = (nat - 3) / 4
+        do i = nat - 3 - nat_surf + 1, nat - 3
+                surf_position = surf_position + atom_position(i, 3)
+        end do
+
+        surf_position = surf_position / nat_surf
+
+
+        output = 'vib/out.dat'
+
+        open(10, file=output, status='replace')
         
-        write(*,*) '----- wave number (cm-1) & energy (eV) of H2O vibration -----'
+        write(*,*) '----- frequency (Hz) & wave number (cm-1) & energy (eV) of H2O vibration -----'
+        write(10,*) '----- frequency (Hz) & wave number (cm-1) & energy (eV) of H2O vibration -----'
         do i = 1, 9
                 if (omega2(i) >= 0 ) then
-                        write(*, '(2f30.10)') wavenum(i), energy(i)
+                        write(*, '(3f30.10)') omega(i), wavenum(i), energy(i)
+                        write(10, '(3f30.10)') omega(i), wavenum(i), energy(i)
                 else
-                        write(*, '(f30.10, a, f29.10, a)') wavenum(i), 'i', energy(i), 'i'
+                        write(*, '(f30.10,a, f29.10, a, f29.10, a)') omega(i), 'i', wavenum(i), 'i', energy(i), 'i'
+                        write(10, '(f30.10,a, f29.10, a, f29.10, a)') omega(i), 'i', wavenum(i), 'i', energy(i), 'i'
                 end if
         end do
 
         write(*,*) '----------'
+        write(10,*) '----------'
+
         write(*, '(a, f10.5, a6)') 'zero point energy = ', zpe, '(eV)'
+        write(10, '(a, f10.5, a6)') 'zero point energy = ', zpe, '(eV)'
 
         write(*,*) '----- eigen vector -----'
+        write(10,*) '----- eigen vector -----'
         do i = 1, 9
-                write(*, '(9f20.10)') ( eig_vec(i, j), j = 1, 9 )
+                write(*, '(9f16.10)') ( eig_vec(i, j), j = 1, 9 )
+                write(10, '(9f16.10)') ( eig_vec(i, j), j = 1, 9 )
         end do
 
+        write(*,*) '----- atom position -----'
+        write(10,*) '----- atom position -----'
+        do i = nat-2, nat
+                write(*, '(3f16.10)') ( atom_position(i, j), j = 1, 3 )
+                write(10, '(3f16.10)') ( atom_position(i, j), j = 1, 3 )
+        end do
 
+        write(*, '(a, f10.5)') 'surface position =', surf_position
+        write(10, '(a, f10.5)') 'surface position =', surf_position
 
+        close(10)
 
 contains
         subroutine get_mass_matrix(filename, nat, mass)
@@ -205,7 +247,7 @@ contains
                 character(100) :: filename, line
                 real(dp) :: mass(9,9)
                 integer :: ios, nat, i, j, k
-                character(100) :: symbol(19)
+                character(100) :: symbol(nat)
                 real(dp) :: m(9)
 
 
@@ -289,6 +331,30 @@ contains
                 call dgeev('V', 'V', 9, matrix, 9, eigen_re, eigen_im, vl, 9, vr, 9, work, 8*9, info)
                 deallocate( vl, work )
         end subroutine
+
+        subroutine read_output(filename, nat, atom_symbol, atom_position)
+                implicit none
+
+                integer, parameter :: dp = kind(0.0d0)
+                integer :: i, j, nat
+                character(3) :: filename
+                character(100) :: line
+                character(2) :: atom_symbol(nat)
+                real(dp) :: atom_position(nat,3)
+
+                open(10, file=trim(filename), status='old')
+
+                do
+                        read(10, '(a)', end=100) line
+                        if ( index(line, 'ATOMIC_POSITIONS') > 0 ) then
+                                do i = 1, nat
+                                        read(10, *) atom_symbol(i), ( atom_position(i, j), j = 1, 3 )
+                                end do
+                        end if
+                end do
+100 close(10)
+        end subroutine
+
 
 
 end program
