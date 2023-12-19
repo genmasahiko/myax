@@ -1,5 +1,6 @@
 
 F90	= gfortran
+CPP	= g++
 LAPACK_DIR = /usr/local/opt/lapack/lib
 LDFLAGS	= -L${LAPACK_DIR} -llapack
 
@@ -19,6 +20,9 @@ vibration:
 
 anime:
 	$(F90) anime.f90 -o anime.x $(LDFLAGS)
+
+adjust:
+	$(CPP) adjustcube.cpp -o adjustcube.x
 
 test:
 	$(F90) test.f90 -o test.x $(LDFLAGS)
