@@ -207,18 +207,3 @@ void WriteCubeFile(std::string filename, Data data) {
 
 	std::remove("tmp.cube");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
