@@ -3,9 +3,10 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <filesystem>
 #include <cmath>
 #include <cstdlib>
+#include <sys/stat.h>
+#include <iomanip>
 
 class Indata {
 public:
@@ -134,17 +135,15 @@ int Shifth2o(int index, std::string filename, Indata &data) {
     };
 
     std::string dirname = std::to_string(index) + "ori";
+    std::string command1 = "mkdir " + dirname;
+    std::system(command1.c_str());
 
-    if ( !std::filesystem::exists( dirname ) ) {
+    for (int i = 0; i < 11; i++) {
 
-        for (int i = 0; i < 11; i++) {
+        std::string command2 = "mkdir " + dirname + "/" + std::to_string(i);
+        std::system(command2.c_str());
 
-            std::filesystem::create_directory( dirname );
-            std::filesystem::create_directory( dirname + "/" + std::to_string(i) );
-
-        };
-
-    }
+    };
 
     for (int i = 0; i < 11; i++) {
 
