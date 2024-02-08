@@ -243,8 +243,8 @@ int Shifth2o_2(int index, std::string filename, Indata &data) {
             if ( line.find("H") != std::string::npos || line.find("O") != std::string::npos ) {
 
                 outfile << std::left << std::setw(6) << data.atoms[j].name
-                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[0] + data.latvec[0][0] / data.surf_size * i * 0.1 * cos( (index + 1) * pi / 6 )
-                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[1] + data.latvec[0][0] / data.surf_size * i * 0.1 * sin( (index + 1) * pi / 6 )
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[0] + data.latvec[0][0] / data.surf_size * i * 0.1 * cos( (2*index + 1) * pi / 6 )
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[1] + data.latvec[0][0] / data.surf_size * i * 0.1 * sin( (2*index + 1) * pi / 6 )
                         << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
                         << std::right << std::setw(5) << "0"
                         << std::right << std::setw(4) << "0"
