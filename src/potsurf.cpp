@@ -26,7 +26,8 @@ public:
 };
 
 int LoadInitialData(std::string filename, Indata &data);
-int Shifth2o(int index, std::string filename, Indata &data);
+int Shifth2o_1(int index, std::string filename, Indata &data);
+int Shifth2o_2(int index, std::string filename, Indata &data);
 
 int main() {
 
@@ -34,8 +35,11 @@ int main() {
     std::string filename;
     std::cin >> filename;
 
-    Indata data;
+    std::cout << "1st nearest or 2nd nearest: " << std::endl;
+    int nearest;
+    std::cin >> nearest;
 
+    Indata data;
     LoadInitialData(filename, data);
 
     for ( int i = 0; i < 3; i++ ) {
@@ -45,8 +49,14 @@ int main() {
         std::cout << std::endl;
     };
 
-    for (int i = 0; i < 6; i++) {
-        Shifth2o(i, filename, data);
+    if ( nearest == 1 ) {
+        for (int i = 0; i < 6; i++) {
+            Shifth2o_1(i, filename, data);
+        };
+    } else if ( nearest == 2 ) {
+        for (int i = 0; i < 6; i++) {
+            Shifth2o_2(i, filename, data);
+        };
     };
 
     return 0;
@@ -123,7 +133,7 @@ int LoadInitialData(std::string filename, Indata &data) {
     return 0;
 };
 
-int Shifth2o(int index, std::string filename, Indata &data) {
+int Shifth2o_1(int index, std::string filename, Indata &data) {
 
     double const pi = 3.14159265359;
     std::string line;
@@ -167,6 +177,74 @@ int Shifth2o(int index, std::string filename, Indata &data) {
                 outfile << std::left << std::setw(6) << data.atoms[j].name
                         << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[0] + data.latvec[0][0] / data.surf_size * i * 0.1 * cos( index * pi / 3 )
                         << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[1] + data.latvec[0][0] / data.surf_size * i * 0.1 * sin( index * pi / 3 )
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
+                        << std::right << std::setw(5) << "0"
+                        << std::right << std::setw(4) << "0"
+                        << std::right << std::setw(4) << "1"
+                        << std::endl;
+
+                j++;
+
+            } else {
+
+                outfile << line << std::endl;
+
+            };
+
+        };
+
+        infile.clear(); infile.seekg(0, std::ios::beg);
+
+    };
+
+    return 0;
+
+}
+
+int Shifth2o_2(int index, std::string filename, Indata &data) {
+
+    double const pi = 3.14159265359;
+    std::string line;
+    std::ifstream infile(filename);
+
+    if ( !infile.is_open() ) {
+        std::cout << "Error: file not exist" << std::endl;
+        return 1;
+    };
+
+    std::string dirname = std::to_string(index) + "ori";
+    std::string command1 = "mkdir " + dirname;
+    std::system(command1.c_str());
+
+    for (int i = 0; i < 11; i++) {
+
+        std::string command2 = "mkdir " + dirname + "/" + std::to_string(i);
+        std::system(command2.c_str());
+
+    };
+
+    for (int i = 0; i < 11; i++) {
+
+        std::ofstream outfile( dirname + "/" + std::to_string(i) + "/in" );
+        int j = 0;
+
+        while (std::getline(infile, line)) {
+
+            outfile << line << std::endl;
+
+            if ( line.find("ATOMIC_POSITIONS") != std::string::npos ) {
+                break;
+            };
+
+        };
+
+        while (std::getline(infile, line)) {
+
+            if ( line.find("H") != std::string::npos || line.find("O") != std::string::npos ) {
+
+                outfile << std::left << std::setw(6) << data.atoms[j].name
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[0] + data.latvec[0][0] / data.surf_size * i * 0.1 * cos( (index + 1) * pi / 6 )
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[1] + data.latvec[0][0] / data.surf_size * i * 0.1 * sin( (index + 1) * pi / 6 )
                         << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
                         << std::right << std::setw(5) << "0"
                         << std::right << std::setw(4) << "0"
