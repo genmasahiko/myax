@@ -21,13 +21,26 @@ public:
 
     std::vector<Indata::Atom> atoms;
 
+    int FindAtom(std::string name, int order = 1) {
+        int count = 0;
+        for (int i = 0; i < atoms.size(); i++) {
+            if (atoms[i].name == name) {
+                count++;
+                if (count == order) {
+                    return i;
+                };
+            };
+        };
+        return -1;
+    };
+
     Indata() : surf_size(0) {};
 
 };
 
 int LoadInitialData(std::string filename, Indata &data);
-int Shifth2o_1(int index, std::string filename, Indata &data);
-int Shifth2o_2(int index, std::string filename, Indata &data);
+int Shifth2o(int nearest, int index, std::string filename, Indata &data);
+int Rotateh2o(std::string filename, Indata &data);
 
 int main() {
 
@@ -35,31 +48,32 @@ int main() {
     std::string filename;
     std::cin >> filename;
 
-    std::cout << "1st nearest or 2nd nearest: " << std::endl;
-    int nearest;
-    std::cin >> nearest;
+    std::cout << "There are three options" << std::endl;
+    std::cout << "1: Toward 1st nearest" << std::endl;
+    std::cout << "2: Toward 2nd nearest" << std::endl;
+    std::cout << "3: Rotate" << std::endl;
+    int option;
+    std::cin >> option;
 
     Indata data;
     LoadInitialData(filename, data);
 
-    for ( int i = 0; i < 3; i++ ) {
-        for ( int j = 0; j < 3; j++ ) {
-            std::cout << data.latvec[i][j] << " ";
-        };
-        std::cout << std::endl;
-    };
+    if ( option < 3 ) {
 
-    if ( nearest == 1 ) {
         for (int i = 0; i < 6; i++) {
-            Shifth2o_1(i, filename, data);
+
+            Shifth2o(option, i, filename, data);
+
         };
-    } else if ( nearest == 2 ) {
-        for (int i = 0; i < 6; i++) {
-            Shifth2o_2(i, filename, data);
-        };
+
+    } else if ( option == 3 ) {
+
+        Rotateh2o(filename, data);
+
     };
 
     return 0;
+
 }
 
 int LoadInitialData(std::string filename, Indata &data) {
@@ -133,7 +147,7 @@ int LoadInitialData(std::string filename, Indata &data) {
     return 0;
 };
 
-int Shifth2o_1(int index, std::string filename, Indata &data) {
+int Shifth2o(int nearest, int index, std::string filename, Indata &data) {
 
     double const pi = 3.14159265359;
     std::string line;
@@ -170,24 +184,59 @@ int Shifth2o_1(int index, std::string filename, Indata &data) {
 
         };
 
-        while (std::getline(infile, line)) {
+        if ( nearest == 1 ) {
 
-            if ( line.find("H") != std::string::npos || line.find("O") != std::string::npos ) {
+            while (std::getline(infile, line)) {
 
-                outfile << std::left << std::setw(6) << data.atoms[j].name
-                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[0] + data.latvec[0][0] / data.surf_size * i * 0.1 * cos( index * pi / 3 )
-                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[1] + data.latvec[0][0] / data.surf_size * i * 0.1 * sin( index * pi / 3 )
-                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
-                        << std::right << std::setw(5) << "0"
-                        << std::right << std::setw(4) << "0"
-                        << std::right << std::setw(4) << "1"
-                        << std::endl;
+                if ( line.find("H") != std::string::npos || line.find("O") != std::string::npos ) {
 
-                j++;
+                    double xnew = data.atoms[j].pos[0] + data.latvec[0][0] / data.surf_size * i * 0.1 * cos( index * pi / 3 );
+                    double ynew = data.atoms[j].pos[1] + data.latvec[0][0] / data.surf_size * i * 0.1 * sin( index * pi / 3 );
 
-            } else {
+                    outfile << std::left << std::setw(6) << data.atoms[j].name
+                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
+                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
+                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
+                            << std::right << std::setw(5) << "0"
+                            << std::right << std::setw(4) << "0"
+                            << std::right << std::setw(4) << "1"
+                            << std::endl;
 
-                outfile << line << std::endl;
+                    j++;
+
+                } else {
+
+                    outfile << line << std::endl;
+
+                };
+
+            };
+
+        } else if ( nearest == 2 ) {
+
+            while ( std::getline(infile, line) ) {
+
+                if ( line.find("H") != std::string::npos || line.find("O") != std::string::npos ) {
+
+                    double xnew = data.atoms[j].pos[0] + sqrt(3) * data.latvec[0][0] / data.surf_size * i * 0.1 * cos( (2*index + 1) * pi / 6 );
+                    double ynew = data.atoms[j].pos[1] + sqrt(3) * data.latvec[0][0] / data.surf_size * i * 0.1 * sin( (2*index + 1) * pi / 6 );
+
+                    outfile << std::left << std::setw(6) << data.atoms[j].name
+                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
+                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
+                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
+                            << std::right << std::setw(5) << "0"
+                            << std::right << std::setw(4) << "0"
+                            << std::right << std::setw(4) << "1"
+                            << std::endl;
+
+                    j++;
+
+                } else {
+
+                    outfile << line << std::endl;
+
+                };
 
             };
 
@@ -199,9 +248,9 @@ int Shifth2o_1(int index, std::string filename, Indata &data) {
 
     return 0;
 
-}
+};
 
-int Shifth2o_2(int index, std::string filename, Indata &data) {
+int Rotateh2o(std::string filename, Indata &data) {
 
     double const pi = 3.14159265359;
     std::string line;
@@ -212,7 +261,7 @@ int Shifth2o_2(int index, std::string filename, Indata &data) {
         return 1;
     };
 
-    std::string dirname = std::to_string(index) + "ori";
+    std::string dirname = "rotate";
     std::string command1 = "mkdir " + dirname;
     std::system(command1.c_str());
 
@@ -223,10 +272,9 @@ int Shifth2o_2(int index, std::string filename, Indata &data) {
 
     };
 
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 10; i++) {
 
         std::ofstream outfile( dirname + "/" + std::to_string(i) + "/in" );
-        int j = 0;
 
         while (std::getline(infile, line)) {
 
@@ -238,22 +286,32 @@ int Shifth2o_2(int index, std::string filename, Indata &data) {
 
         };
 
-        while (std::getline(infile, line)) {
+        int j = 0;
+        int oindex = data.FindAtom("O");
 
-            if ( line.find("H") != std::string::npos || line.find("O") != std::string::npos ) {
+        while ( std::getline(infile, line) ) {
+
+            if ( line.find("H") != std::string::npos ) {
+
+                j++;
+                int hindex = data.FindAtom("H", j);
+
+                double xnew = ( data.atoms[hindex].pos[0] - data.atoms[oindex].pos[0] ) * cos( i * pi * 0.2 ) 
+                            - ( data.atoms[hindex].pos[1] - data.atoms[oindex].pos[1] ) * sin( i * pi * 0.2 ) 
+                            + data.atoms[oindex].pos[0];
+
+                double ynew = ( data.atoms[hindex].pos[0] - data.atoms[oindex].pos[0] ) * sin( i * pi * 0.2 ) 
+                            + ( data.atoms[hindex].pos[1] - data.atoms[oindex].pos[1] ) * cos( i * pi * 0.2 ) 
+                            + data.atoms[oindex].pos[1];
 
                 outfile << std::left << std::setw(6) << data.atoms[j].name
-                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) 
-                            << data.atoms[j].pos[0] + sqrt(3) * data.latvec[0][0] / data.surf_size * i * 0.1 * cos( (2*index + 1) * pi / 6 )
-                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) 
-                            << data.atoms[j].pos[1] + sqrt(3) * data.latvec[0][0] / data.surf_size * i * 0.1 * sin( (2*index + 1) * pi / 6 )
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
                         << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
                         << std::right << std::setw(5) << "0"
                         << std::right << std::setw(4) << "0"
                         << std::right << std::setw(4) << "1"
                         << std::endl;
-
-                j++;
 
             } else {
 
@@ -269,4 +327,4 @@ int Shifth2o_2(int index, std::string filename, Indata &data) {
 
     return 0;
 
-}
+};
