@@ -291,7 +291,18 @@ int Rotateh2o(std::string filename, Indata &data) {
 
         while ( std::getline(infile, line) ) {
 
-            if ( line.find("H") != std::string::npos ) {
+            if ( line.find("O") != std::string::npos ) {
+
+                outfile << std::left << std::setw(6) << data.atoms[j].name
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[oindex].pos[0]
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[oindex].pos[1]
+                        << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[oindex].pos[2] 
+                        << std::right << std::setw(5) << "0"
+                        << std::right << std::setw(4) << "0"
+                        << std::right << std::setw(4) << "1"
+                        << std::endl;
+
+            } else if ( line.find("H") != std::string::npos ) {
 
                 j++;
                 int hindex = data.FindAtom("H", j);
