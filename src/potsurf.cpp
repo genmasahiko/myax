@@ -193,14 +193,25 @@ int Shifth2o(int nearest, int index, std::string filename, Indata &data) {
                     double xnew = data.atoms[j].pos[0] + data.latvec[0][0] / data.surf_size * i * 0.1 * cos( index * pi / 3 );
                     double ynew = data.atoms[j].pos[1] + data.latvec[0][0] / data.surf_size * i * 0.1 * sin( index * pi / 3 );
 
-                    outfile << std::left << std::setw(6) << data.atoms[j].name
-                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
-                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
-                            << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
-                            << std::right << std::setw(5) << "1"
-                            << std::right << std::setw(4) << "1"
-                            << std::right << std::setw(4) << "1"
-                            << std::endl;
+                    if ( line.find("O") != std::string::npos ) {
+                        outfile << std::left << std::setw(6) << data.atoms[j].name
+                                << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
+                                << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
+                                << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
+                                << std::right << std::setw(5) << "0"
+                                << std::right << std::setw(4) << "0"
+                                << std::right << std::setw(4) << "1"
+                                << std::endl;
+                    } else {
+                        outfile << std::left << std::setw(6) << data.atoms[j].name
+                                << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
+                                << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
+                                << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
+                                << std::right << std::setw(5) << "1"
+                                << std::right << std::setw(4) << "1"
+                                << std::right << std::setw(4) << "1"
+                                << std::endl;
+                    };
 
                     j++;
 
