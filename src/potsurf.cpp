@@ -197,8 +197,8 @@ int Shifth2o(int nearest, int index, std::string filename, Indata &data) {
                             << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
                             << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
                             << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
-                            << std::right << std::setw(5) << "0"
-                            << std::right << std::setw(4) << "0"
+                            << std::right << std::setw(5) << "1"
+                            << std::right << std::setw(4) << "1"
                             << std::right << std::setw(4) << "1"
                             << std::endl;
 
@@ -225,8 +225,8 @@ int Shifth2o(int nearest, int index, std::string filename, Indata &data) {
                             << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
                             << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
                             << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
-                            << std::right << std::setw(5) << "0"
-                            << std::right << std::setw(4) << "0"
+                            << std::right << std::setw(5) << "1"
+                            << std::right << std::setw(4) << "1"
                             << std::right << std::setw(4) << "1"
                             << std::endl;
 
@@ -319,8 +319,8 @@ int Rotateh2o(std::string filename, Indata &data) {
                         << std::right << std::setw(14) << std::fixed << std::setprecision(9) << xnew
                         << std::right << std::setw(14) << std::fixed << std::setprecision(9) << ynew
                         << std::right << std::setw(14) << std::fixed << std::setprecision(9) << data.atoms[j].pos[2] 
-                        << std::right << std::setw(5) << "0"
-                        << std::right << std::setw(4) << "0"
+                        << std::right << std::setw(5) << "1"
+                        << std::right << std::setw(4) << "1"
                         << std::right << std::setw(4) << "1"
                         << std::endl;
 
