@@ -13,6 +13,7 @@ all :
 	$(F90) anime.f90 -o anime.x $(LDFLAGS)
 	$(CPP) adjustcube.cpp -o adjustcube.x
 	$(CPP) potsurf.cpp -o potsurf.x
+	$(CPP) h2oangle.cpp -o h2oangle.x
 
 disp:
 	$(F90) disp.f90 -o disp.x $(LDFLAGS)
@@ -28,6 +29,9 @@ adjust:
 
 potsurf:
 	$(CPP) potsurf.cpp -o potsurf.x
+
+h2oangle:
+	$(CPP) h2oangle.cpp -o h2oangle.x
 
 test:
 	$(F90) test.f90 -o test.x $(LDFLAGS)
