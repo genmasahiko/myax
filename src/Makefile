@@ -34,7 +34,7 @@ h2oangle:
 	$(CPP) h2oangle.cpp -o h2oangle.x
 
 test:
-	$(F90) test.f90 -o test.x $(LDFLAGS)
+	$(CPP) -O3 test.cpp -o test.x
 
 clean : 
 	rm *.mod
