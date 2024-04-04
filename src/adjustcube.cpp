@@ -31,6 +31,20 @@ public:
 
     std::vector<Data::Atom> atoms;
 
+    std::vector< std::vector< std::vector<double> > > vol;
+
+    void allocate_vol() {
+        vol.resize(grid[0]);
+
+        for (int i = 0; i < grid[0]; i++) {
+            vol[i].resize(grid[1]);
+
+            for (int j = 0; j < grid[1]; j++) {
+                vol[i][j].resize(grid[2]);
+            }
+        }
+    };
+
     int FindAtom(int number, int order = 1) {
         int count = 0;
         for (int i = 0; i < atoms.size(); i++) {
@@ -46,9 +60,9 @@ public:
 };
 
 void LoadCubeFile(std::string filename, Data& data); 
-void ShiftVolumaticData(std::string filename, bool lset, Data data); 
+void ShiftVolumaticData(std::string filename, bool lset, Data& data); 
 void ShiftAtomicData(std::string filename, bool lset, Data& data);
-void WriteCubeFile(std::string filename, Data data);
+void WriteCubeFile(std::string filename, Data& data);
 
 int main(int argc, char* argv[]) {
 
@@ -66,19 +80,21 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::cout << "Set H2O molecule at..." << std::endl;
-    std::cout << "1. Center of the surface" << std::endl;
-    std::cout << "2. Do not change" << std::endl;
-    int tmp;
-    std::cin >> tmp;
+    // std::cout << "Set H2O molecule at..." << std::endl;
+    // std::cout << "1. Center of the surface" << std::endl;
+    // std::cout << "2. Do not change" << std::endl;
+    // int tmp;
+    // std::cin >> tmp;
 
-    bool lset_center;
-    if (tmp == 1) {
-        lset_center = true;
-    }
-    else if (tmp == 2) {
-        lset_center = false;
-    }
+    // bool lset_center;
+    // if (tmp == 1) {
+    //     lset_center = true;
+    // }
+    // else if (tmp == 2) {
+    //     lset_center = false;
+    // }
+    
+    bool lset_center = true;
 
     // Load cube file and store data in Data class
     Data data;
@@ -104,6 +120,8 @@ void LoadCubeFile(std::string filename, Data& data) {
     if (cubeFile.is_open()) {
         std::string line;
         int lineNum = 0;
+
+        // Read grid data and atomic data
         while (std::getline(cubeFile, line)) {
             lineNum++;
 
@@ -112,108 +130,79 @@ void LoadCubeFile(std::string filename, Data& data) {
             if (lineNum == 3) {
                 iss >> data.nat >> data.origin[0] >> 
                     data.origin[1] >> data.origin[2];
-            }
-            else if (lineNum == 4) {
+            } else if (lineNum == 4) {
                 iss >> data.grid[0] >> data.stepw[0][0] >> 
                     data.stepw[0][1] >> data.stepw[0][2];
-            }
-            else if (lineNum == 5) {
+            } else if (lineNum == 5) {
                 iss >> data.grid[1] >> data.stepw[1][0] >> 
                     data.stepw[1][1] >> data.stepw[1][2];
-            }
-            else if (lineNum == 6) {
+            } else if (lineNum == 6) {
                 iss >> data.grid[2] >> data.stepw[2][0] >> 
                     data.stepw[2][1] >> data.stepw[2][2];
-            }
-            else if (lineNum > 6 && lineNum <= 6 + data.nat) {
+            } else if (lineNum > 6 && lineNum <= 6 + data.nat) {
                 Data::Atom atom;
                 iss >> atom.atomnum >> atom.charge >> 
                     atom.pos[0] >> atom.pos[1] >> atom.pos[2];
                 data.atoms.push_back(atom);
-            }
-            else if (lineNum >= 6 + data.nat) {
+            } else if (lineNum >= 6 + data.nat) {
                 break;
+                // to be fixed
             }
         }
+
+        // reflesh cubeFile: This feature will be fixed
+        cubeFile.clear();
+        cubeFile.seekg(0, std::ios::beg);
+        for ( int i = 0; i < 6 + data.nat; i++ ) {
+            std::getline(cubeFile, line);
+        }
+
+        // Read volumatic data
+        data.allocate_vol();
+        for (int i = 0; i < data.grid[0]; i++) {
+            for (int j = 0; j < data.grid[1]; j++) {
+                for (int k = 0; k < data.grid[2]; k++) {
+                    cubeFile >> data.vol[i][j][k];
+                }
+            }
+        };
+
     }
     else {
         std::cerr << "Error: Cannot open file: " << filename << std::endl;
     }
 }
 
-void ShiftVolumaticData(std::string filename, bool lset, Data data) {
+void ShiftVolumaticData(std::string filename, bool lset, Data& data) {
 
     // Shift z-axis -> x-axis and y-axis
 
     // for z-axis
-    std::ifstream cubeFile(filename);
-    std::ofstream tmpFile("tmp.cube");
+    std::vector< std::vector< std::vector<double> > > volnew( data.grid[0], std::vector< std::vector<double> >( data.grid[1], std::vector<double>( data.grid[2] ) ) );
 
-    if (cubeFile.is_open() && tmpFile.is_open()) {
-
-        int HeaderLineEnd = 6;
-        int VolLineStart = HeaderLineEnd + data.nat;
-        std::string line;
-
-        for ( int i = 0; i < VolLineStart; i++ ) {
-            std::getline(cubeFile, line);
-        }
-
-        std::vector<std::vector<std::vector<double>>> vol( data.grid[0], std::vector<std::vector<double>>( data.grid[1], std::vector<double>( data.grid[2] ) ) );
+    if ( lset ) {
 
         for ( int i = 0; i < data.grid[0]; i++ ) {
             for ( int j = 0; j < data.grid[1]; j++ ) {
                 for ( int k = 0; k < data.grid[2]; k++ ) {
-                    cubeFile >> vol[i][j][k];
+                    volnew[i][j][k] = data.vol[ ( i + data.grid[0] / 2 ) % data.grid[0] ][ ( j + data.grid[1] / 2 ) % data.grid[1] ][ ( k + data.grid[2] / 2 ) % data.grid[2] ];
                 }
             }
         }
-
-        std::vector<std::vector<std::vector<double>>> volnew( data.grid[0], std::vector<std::vector<double>>( data.grid[1], std::vector<double>( data.grid[2] ) ) );
-
-        if ( lset ) {
-
-            for ( int i = 0; i < data.grid[0]; i++ ) {
-                for ( int j = 0; j < data.grid[1]; j++ ) {
-                    for ( int k = 0; k < data.grid[2]; k++ ) {
-                        volnew[i][j][k] = vol[ ( i + data.grid[0] / 2 ) % data.grid[0] ][ ( j + data.grid[1] / 2 ) % data.grid[1] ][ ( k + data.grid[2] / 2 ) % data.grid[2] ];
-                    }
-                }
-            }
-
-        } else {
-
-            for ( int i = 0; i < data.grid[0]; i++ ) {
-                for ( int j = 0; j < data.grid[1]; j++ ) {
-                    for ( int k = 0; k < data.grid[2]; k++ ) {
-                        volnew[i][j][k] = vol[i][j][ ( k + data.grid[2] / 2 ) % data.grid[2] ];
-                    }
-                }
-            }
-
-        }
-
-        for ( int i = 0; i < data.grid[0]; i++ ) {
-            for ( int j = 0; j < data.grid[1]; j++ ) {
-                for ( int k = 0; k < data.grid[2]; k++ ) {
-                    tmpFile << std::right << std::scientific << std::setprecision(4) << std::setw(13) << volnew[i][j][k];
-
-                    // Break the line every 6 data and at the end of one z-block.
-                    if ( ( k + 1 ) % 6 == 0 || ( k + 1 ) == data.grid[2] ) {
-                        tmpFile << std::endl;
-                    }
-                }
-            }
-        }
-
-        cubeFile.close();
-        tmpFile.close();
 
     } else {
 
-        std::cerr << "Error: Cannot open file: " << filename << std::endl;
-    };
+        for ( int i = 0; i < data.grid[0]; i++ ) {
+            for ( int j = 0; j < data.grid[1]; j++ ) {
+                for ( int k = 0; k < data.grid[2]; k++ ) {
+                    volnew[i][j][k] = data.vol[i][j][ ( k + data.grid[2] / 2 ) % data.grid[2] ];
+                }
+            }
+        }
 
+    }
+
+    volnew.swap(data.vol);
 }
 
 void ShiftAtomicData(std::string filename, bool lset, Data& data) {
@@ -264,7 +253,7 @@ void ShiftAtomicData(std::string filename, bool lset, Data& data) {
     }
 }
 
-void WriteCubeFile(std::string filename, Data data) {
+void WriteCubeFile(std::string filename, Data& data) {
     std::ofstream cubeFile(filename);
 
     if (cubeFile.is_open()) {
@@ -285,24 +274,23 @@ void WriteCubeFile(std::string filename, Data data) {
                 << std::setw(12) << data.atoms[i].pos[1] << std::setw(12)
                 << data.atoms[i].pos[2] << std::endl;
         }
-    }
-    else {
+
+        for ( int i = 0; i < data.grid[0]; i++ ) {
+            for ( int j = 0; j < data.grid[1]; j++ ) {
+                for ( int k = 0; k < data.grid[2]; k++ ) {
+                    cubeFile << std::right << std::scientific << std::setprecision(4) << std::setw(13) << data.vol[i][j][k];
+
+                    // Break the line every 6 data and at the end of one z-block.
+                    if ( ( k + 1 ) % 6 == 0 || ( k + 1 ) == data.grid[2] ) {
+                        cubeFile << std::endl;
+                    }
+                }
+            }
+        }
+    
+    } else {
         std::cerr << "Error: Cannot open file: " << filename << std::endl;
     }
 
-    std::ifstream tmpFile("tmp.cube");
-
-    if ( tmpFile.is_open() ) {
-        std::string line;
-        while ( std::getline(tmpFile, line) ) {
-            cubeFile << line << std::endl;
-        }
-    }
-    else {
-        std::cerr << "Error: Cannot open file: tmp.cube" << std::endl;
-    }
-
     cubeFile.close();
-    tmpFile.close();
-
 }
