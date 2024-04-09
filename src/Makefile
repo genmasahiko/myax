@@ -5,6 +5,7 @@ LAPACK_DIR = /opt/homebrew/opt/lapack/lib
 LDFLAGS	= -L${LAPACK_DIR} -llapack
 
 #for cygnus
+#CPP = g++
 #LDFLAGS = -lmkl_gf_lp64 -lmkl_sequential -lmkl_core
 
 all :
