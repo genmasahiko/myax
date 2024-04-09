@@ -14,6 +14,7 @@ all :
 	$(CPP) adjustcube.cpp -o adjustcube.x
 	$(CPP) potsurf.cpp -o potsurf.x
 	$(CPP) h2oangle.cpp -o h2oangle.x
+	$(CPP) convcheck.cpp -o convcheck.x
 
 disp:
 	$(F90) disp.f90 -o disp.x $(LDFLAGS)
@@ -32,6 +33,9 @@ potsurf:
 
 h2oangle:
 	$(CPP) h2oangle.cpp -o h2oangle.x
+
+convcheck:
+	$(CPP) convcheck.cpp -o convcheck.x
 
 test:
 	$(CPP) -O3 test.cpp -o test.x
