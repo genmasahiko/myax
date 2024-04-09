@@ -3,11 +3,12 @@ program vibration
     integer, parameter :: dp = kind(0.0d0)
 
     real(dp), allocatable :: &
-        & f_plus(:,:), f_minus(:,:), force(:,:),  &
+        & f_plus(:,:), f_minus(:,:), force(:,:,:,:),  &
         & hes(:,:), mass_hes(:,:), mass(:,:), &
-        & omega(:), energy(:), wavenum(:), omega2(:), eig_vec(:,:)
+        & omega(:), energy(:), wavenum(:), omega2(:), eig_vec(:,:), &
+        & force_eq(:,:), force_average(:)
 
-    integer :: i, j, k, nat, ios, l
+    integer :: i, j, k, nat, ios, l, pm
     character(100) :: filename, line, inp, input, output
     real(dp) :: dx, zpe
     real(dp) :: eigen_re(9), eigen_im(9)
@@ -35,77 +36,52 @@ program vibration
     read(*,*) dx
 
     allocate( f_plus(9, 9), f_minus(9, 9) ) 
-    allocate( force(nat, 9) )
+    allocate( force(nat, 3, 9, 2), force_average(3), force_eq(nat,3) )
 
     f_plus = 0
     f_minus = 0
-
     force = 0
-    ! for disp_+
+    force_eq = 0
+
+    ! for equilibrium position
+    filename = 'out'
+    call get_force( filename, nat, force_eq )
+
     do i = 1, 9
-        write(filename, *) i
-        filename = 'vib/disp_'//trim(adjustl(filename))//'+'
-        input = trim(adjustl(filename))//'/out'
+        do pm = 1, 2
 
-        open(10, file=input, status='old')
-        do
-            read(10, '(a)', iostat=ios) line
-            if( index(line, 'Forces acting on atoms') > 0 ) exit
-            if( ios == -1 ) write(*,*) 'forces not printed!'
-        end do
+            ! set filename 
+            write(filename, *) i
+            if ( pm == 1 ) then
+                filename = 'vib/disp_'//trim(adjustl(filename))//'+'
+            else if ( pm == 2 ) then
+                filename = 'vib/disp_'//trim(adjustl(filename))//'-'
+            end if
+            input = trim(adjustl(filename))//'/out'
 
-        read(10, '(a)') ! read empty line
+            call get_force( input, nat, force(:, :, i, pm) )
+            !  call remove_drift_force( nat, force(:, :, i, pm), force_eq )
 
-        do j = 1, nat
-            read(10, '(a)') line
-            line = line( index(line, '=') + 1:)
-            line = trim(adjustl(line))
-            read(line, *) ( force(j, k), k = 1, 3 )
-        end do
+            if ( pm == 1 ) then
+                l = 0
+                do j = 1, 3
+                    do k = 1, 3
+                        l = l + 1
+                        f_plus(i, l) = force( nat - 2 + j - 1, k, i, pm )
+                    end do
+                end do
+            else if ( pm == 2 ) then
+                l = 0
+                do j = 1, 3
+                    do k = 1, 3
+                        l = l + 1
+                        f_minus(i, l) = force( nat - 2 + j - 1, k, i, pm )
+                    end do
+                end do
+            end if
 
-        l = 0
-        do j = 1, 3
-            do k = 1, 3
-                l = l + 1
-                f_plus(i, l) = force( nat - 2 + j - 1, k )
-            end do
         end do
     end do
-
-    force = 0
-
-    ! for disp_-
-    do i = 1, 9
-        write(filename, *) i
-        filename = 'vib/disp_'//trim(adjustl(filename))//'-'
-        input = trim(adjustl(filename))//'/out'
-
-        open(10, file=input, status='old')
-        do
-            read(10, '(a)', iostat=ios) line
-            if( index(line, 'Forces acting on atoms') > 0 ) exit
-            if( ios == -1 ) write(*,*) 'forces not printed!'
-        end do
-
-        read(10, '(a)') ! read empty line
-
-        do j = 1, nat
-            read(10, '(a)') line
-            line = line( index(line, '=') + 1:)
-            line = trim(adjustl(line))
-            read(line, *) ( force(j, k), k = 1, 3 )
-        end do
-
-        l = 0
-        do j = 1, 3
-            do k = 1, 3
-                l = l + 1
-                f_minus(i, l) = force( nat - 2 + j - 1, k )
-            end do
-        end do
-    end do
-
-    deallocate( force )
 
     allocate( hes(9,9) )
     do i = 1, 9
@@ -135,27 +111,14 @@ program vibration
 
     deallocate(mass_hes)
 
-    !write(*,*) '-----eigen value (Re, Im) of mass weighted hessian----- '
-    !do i = 1, 9
-    !       write(*, '(2f20.10)') eigen_re(i), eigen_im(i)
-    !end do
+    write(*,*) '-----eigen value (Re, Im) of mass weighted hessian----- '
+    do i = 1, 9
+           write(*, '(2f20.10)') eigen_re(i), eigen_im(i)
+    end do
 
-
-    ! To be revised
-
-    !do i = 1, 9
-    !       omega(i) = eigen_re(i) / ang_to_Bohr  / amu_to_me
-    !       omega(i) = dsqrt( dabs(eigen_re(i)) )
-    !       energy(i) = omega(i) * 0.50_dp
-    !       energy(i) = energy(i) * Ry_to_eV
-    !       omega(i) = ( 2.0_dp * dsqrt(2.0_dp) * omega(i) )  / 2.418884d-17
-    !       wavenum(i) = ( 2.0_dp * pi * omega(i) * 1.0d-2 ) / c
-    !end do
-
-    !write(*,*) 'ver.1 ----- wave number (cm-1) & energy (eV) of H2O vibration -----'
-    !do i = 1, 9
-    !        write(*, '(2f30.10)') wavenum(i), energy(i)
-    !end do
+    do i = 1, 9
+        if ( dabs(eigen_re(i) ) < 1.0d-10 ) eigen_re(i) = 0.0_dp
+    end do
 
     allocate( omega2(9), omega(9), energy(9), wavenum(9) )
 
@@ -196,7 +159,6 @@ program vibration
     end do
 
     surf_position = surf_position / nat_surf
-
 
     output = 'vib/out.dat'
 
@@ -239,7 +201,72 @@ program vibration
 
     close(10)
 
-    contains
+contains
+
+    subroutine get_force(filename, nat, force)
+        implicit none
+
+        integer, parameter :: dp = kind(0.0d0)
+        character(100) :: filename, line
+        real(dp) :: force(nat, 3)
+        integer :: ios, nat, i, j
+
+        open(10, file=filename, status='old')
+
+        do
+            read(10, '(a)', iostat=ios) line
+            if ( index(line, 'Forces acting on atoms') > 0 ) exit
+        end do
+
+        read(10, '(a)') ! read empty line
+
+        do i = 1, nat
+            read(10, '(a)') line
+            line = line( index(line, '=') + 1:)
+            line = trim(adjustl(line))
+            read(line, *) ( force(i, j), j = 1, 3 )
+        end do
+
+        close(10)
+    end subroutine
+
+    subroutine remove_drift_force(nat, force, force_eq)
+        implicit none
+
+        integer, parameter :: dp = kind(0.0d0)
+        real(dp), intent(inout) :: force(nat, 3)
+        real(dp), intent(in) :: force_eq(nat, 3)
+        real(dp) :: force_average(3)
+        integer :: nat, i, j
+
+        force_average = 0.0_dp
+
+        ! substract equilibrium force
+        ! NOTE: The necessity of this step is not clear.
+        do i = 1, nat
+            do j = 1, 3
+                force(i, j) = force(i, j) - force_eq(i, j)
+            end do
+        end do
+
+        ! calculate drift force as average of forces acting on H2O
+        force_average = 0.0_dp
+        do i = 1, 3
+            do j = nat-2, nat
+                force_average(i) = force_average(i) + force(j, i)
+            end do
+            force_average(i) = force_average(i) / 3.0_dp
+        end do
+
+        ! substract drift force
+        do i = 1, 3
+            do j = 1, nat
+                force(j, i) = force(j, i) - force_average(i)
+            end do
+        end do
+
+    end subroutine
+
     subroutine get_mass_matrix(filename, nat, mass)
         implicit none
 
@@ -354,7 +381,5 @@ program vibration
         end do
         100 close(10)
     end subroutine
-
-
 
 end program
