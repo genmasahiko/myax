@@ -36,7 +36,7 @@ h2oangle:
 	$(CPP) h2oangle.cpp -o h2oangle.x
 
 convcheck:
-	$(CPP) convcheck.cpp -o convcheck.x
+	$(CPP) convcheck.cpp data.cpp -o convcheck.x
 
 test:
 	$(CPP) -O3 test.cpp -o test.x

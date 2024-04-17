@@ -103,6 +103,11 @@ program vibration
         end do
     end do
 
+    ! print mass_hes
+    do i = 1, 9
+        write(*, '(9f20.10)') ( mass_hes(i, j), j = 1, 9 )
+    end do
+
     deallocate( mass, hes )
 
     allocate( eig_vec(9,9) )
@@ -279,7 +284,7 @@ contains
 
 
         ! atomic weight from CIAAW of IUPAC
-        real(dp), parameter :: mass_H = 1.008, mass_O = 15.999
+        real(dp), parameter :: mass_H = 1.00794, mass_O = 15.99940
 
 
         open(10, file=filename, status='old')
