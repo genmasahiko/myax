@@ -221,6 +221,16 @@ contains
         do
             read(10, '(a)', iostat=ios) line
             if ( index(line, 'Forces acting on atoms') > 0 ) exit
+
+            if ( index(line, 'convergence NOT achieved') > 0 ) then
+                write(*,*) 'Convergence not achieved in ', trim(filename)
+                STOP
+            end if
+
+            if ( ios == -1 ) then
+                write(*,*) 'Forces are not printed in ', trim(filename)
+                STOP
+            end if
         end do
 
         read(10, '(a)') ! read empty line
@@ -276,16 +286,12 @@ contains
         implicit none
 
         integer, parameter :: dp = kind(0.0d0)
-        character(100) :: filename, line
-        real(dp) :: mass(9,9)
         integer :: ios, nat, i, j, k
-        character(100) :: symbol(nat)
-        real(dp) :: m(9)
-
+        real(dp) :: mass(9,9), m(9)
+        character(100) :: filename, line, symbol(nat)
 
         ! atomic weight from CIAAW of IUPAC
         real(dp), parameter :: mass_H = 1.00794, mass_O = 15.99940
-
 
         open(10, file=filename, status='old')
 

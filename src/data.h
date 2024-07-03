@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <any>
+#include <unordered_map>
 
 #pragma once
 
@@ -27,13 +29,21 @@ public:
     void SetNat(int n); 
     void SetNtyp(int n);
     void SetAtom( std::string symbol, std::vector<double> pos, std::vector<int> ifpos, std::vector<double> force);
+    void SetCalculation(std::string calc);
+    void SetRestartmode(std::string mode);
+    void SetParam( std::unordered_map<std::string, std::any> param );
 
     // Use these functions to get the data
     int GetNat(); 
     std::vector<double> GetForce(int i);
     std::vector<int> GetIfpos(int i);
+    std::string GetCalculation();
+    std::string GetRestartmode();
 
-    // Read the output file of QuantumESPRESSO
+    template <typename T> T GetParam( std::string key );
+
+    // Read the io file of QuantumESPRESSO
+    Data ReadInfile( std::ifstream &file );
     Data ReadOutfile( std::ifstream &file );
 
 private:
@@ -50,5 +60,10 @@ private:
 
     int nat;
     int ntyp;
+
+    std::string calculation;
+    std::string restartmode;
+
+    std::unordered_map<std::string, std::any> params;
 
 };
