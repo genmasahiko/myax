@@ -49,4 +49,15 @@ clean :
 	rm *.mod
 	rm *.o
 	rm $(TARGET)
-	
+
+# TODO: Revise this Makefile as follows
+
+INT = integrate_norm.cpp cube.cpp
+INT_OBJ = $(INT:.cpp=.o)
+
+int: $(INT_OBJ)
+	$(CPP) $(INT_OBJ) -o integrate_norm
+
+%.o : %.cpp
+	$(CPP) -c $< -o $@
+
