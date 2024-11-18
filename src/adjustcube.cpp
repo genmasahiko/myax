@@ -14,6 +14,7 @@
 #include <vector>
 #include <iomanip>
 #include <cmath>
+#include <chrono>
 
 class Data {
 public:
@@ -75,8 +76,19 @@ int main(int argc, char* argv[]) {
     else if (argc == 2) {
         filename = argv[1];
     }
-    else if (argc > 2) {
-        std::cerr << "Error: Invalid number of arguments" << std::endl;
+    else if (argc == 3) {
+        filename = argv[1];
+        Data data;
+        LoadCubeFile(filename, data);
+        for (auto& x : data.vol) {
+            for (auto& y : x) {
+                for (auto& z : y) {
+                    z = std::abs(z);
+                }
+            }
+        }
+        WriteCubeFile(argv[2], data);
+
         return 1;
     }
 
@@ -96,6 +108,8 @@ int main(int argc, char* argv[]) {
     
     bool lset_center = true;
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     // Load cube file and store data in Data class
     Data data;
     LoadCubeFile(filename, data);
@@ -110,6 +124,10 @@ int main(int argc, char* argv[]) {
     
     std::string newfilename = filename.substr(0, filename.find(".cube")) + "_shifted.cube";
     WriteCubeFile(newfilename, data);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "The elapsed time: " << elapsed.count() << " s" << std::endl;
 
     return 0;
 };

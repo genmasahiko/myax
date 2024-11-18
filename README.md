@@ -7,5 +7,5 @@ As this program is for personal use, **I do not accept any responsibility for an
 
 ## Installation
 
-Use `make` in the directory `src`. <br>
-Since I don't consider compiler dependence, you should revise `Makefile`. <br>
+Use `make` in current directory. <br>
+The compiler is set in `make.inc`, so you should revies it before compiling. <br>

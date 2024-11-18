@@ -40,7 +40,8 @@ public:
     std::string GetCalculation();
     std::string GetRestartmode();
 
-    template <typename T> T GetParam( std::string key );
+    template <typename T>
+    T GetParam( std::string key );
 
     // Read the io file of QuantumESPRESSO
     Data ReadInfile( std::ifstream &file );

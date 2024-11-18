@@ -125,8 +125,14 @@ int main( int argc, char* argv[]) {
     std::vector<double> h2oDipoleDirection = { midpoint.x - oxygen.x, midpoint.y - oxygen.y, midpoint.z - oxygen.z };
     std::vector<double> zAxis = { 0.0, 0.0, 1.0 };
 
-    double angle = angleBetween(h2oDipoleDirection, zAxis);
-    std::cout << angle << std::endl;
+    double dip_angle = angleBetween(h2oDipoleDirection, zAxis);
+    std::cout << dip_angle << std::endl;
+
+    std::vector<double> oh1 = { hydrogen1.x - oxygen.x, hydrogen1.y - oxygen.y, hydrogen1.z - oxygen.z };
+    std::vector<double> oh2 = { hydrogen2.x - oxygen.x, hydrogen2.y - oxygen.y, hydrogen2.z - oxygen.z };
+
+    double hoh_angle = angleBetween(oh1, oh2);
+    //std::cout << hoh_angle << std::endl;
 
     return 0;
 }

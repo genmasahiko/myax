@@ -136,19 +136,19 @@ contains
                         read(10, '(a)', end=100) line
 
                         if( index(line, 'control') > 0 .and. (.not. (tprnfor)) ) then
-                                write(11, '(a)') line
+                                write(11, '(a)') trim(line)
                                 write(11, '(a)') " tprnfor = .true."
 
                         else if ( index(line, 'ATOMIC_POSITIONS') > 0 ) then
                                 if ( .not. lfcp ) then
-                                        write(11, '(a)') line
+                                        write(11, '(a)') trim(line)
                                         do i = 1, nat
                                                 write(11, '(a, 3f20.10)') atom_symbol(i), &
                                                                 ( atom_position(i, j), j = 1, 3 )
                                         end do
                                         exit
                                 else
-                                        write(11, '(a)') line
+                                        write(11, '(a)') trim(line)
                                         do i = 1, nat
                                                 write(11, '(a, 3f20.10, 3i4)') atom_symbol(i), &
                                                         ( atom_position(i, j), j = 1, 3 ), 0, 0, 0
@@ -160,7 +160,7 @@ contains
                                 write(11, '(a)') " calculation = 'scf'"
 
                         else
-                                write(11, '(a)') line
+                                write(11, '(a)') trim(line)
                         end if
 
                 end do

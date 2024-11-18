@@ -58,10 +58,17 @@ std::string Data::GetRestartmode() {
     return restartmode;
 }
 
-template <typename T> T Data::GetParam( std::string key ) {
-    auto type = params[key].type();
-    return std::any_cast<type>(params[key]);
-}
+// It will be revised and used.
+//
+//template <typename T> 
+//T Data::GetParam( std::string key ) {
+//    T value;
+//    if ( decltype(value) == params[key].type() ) {
+//        return std::any_cast<T>(params[key]);
+//    } else {
+//        std::cerr << "Error: The type of the parameter is not " << typeid(T).name() << std::endl;
+//    }
+//}
 
 std::string GetStringParam( std::string line ) {
     int start = line.find("'") + 1;

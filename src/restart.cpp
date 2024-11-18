@@ -5,8 +5,6 @@
 #include <sstream>
 #include <iomanip>
 
-
-
 #include "data.h"
 
 
@@ -40,7 +38,8 @@ int main() {
     system( ("mv " + infilename + " " + old_infilename).c_str() );
     system( ("mv " + outfilename + " " + old_outfilename).c_str() );
 
-    std::cout << in.GetParam("calculation") << std::endl;
+    std::string key = "calculation";
+    //std::cout << in.GetParam<std::string>(key) << std::endl;
 
     // if ( in.GetParam("calculation") == "neb" ) {
     //     std::cout << "The calculation is NEB." << std::endl;

@@ -1,63 +1,92 @@
+include ../make.inc
 
-F90	= gfortran
-CPP	= /opt/homebrew/bin/g++-13
-LAPACK_DIR = /opt/homebrew/opt/lapack/lib
-LDFLAGS	= -L${LAPACK_DIR} -llapack
+.SUFFIXES:
+.SUFFIXES: .cpp .f90 .o
 
-#for cygnus
-#CPP = g++
-#LDFLAGS = -lmkl_gf_lp64 -lmkl_sequential -lmkl_core
+BINDIR = ../bin
 
-all :
-	$(F90) disp.f90 -o disp.x $(LDFLAGS)
-	$(F90) vibration.f90 -o vibration.x $(LDFLAGS)
-	$(F90) anime.f90 -o anime.x $(LDFLAGS)
-	$(CPP) adjustcube.cpp -o adjustcube.x
-	$(CPP) potsurf.cpp -o potsurf.x
-	$(CPP) h2oangle.cpp -o h2oangle.x
-	$(CPP) convcheck.cpp data.cpp -o convcheck.x
-	$(CPP) restart.cpp data.cpp -o restart.x
+CXXSRCS = \
+	adjustcube.cpp		\
+	test.cpp			\
+	convcheck.cpp  		\
+	h2oangle.cpp   		\
+	integrate_norm.cpp	\
+	potsurf.cpp    		\
+	restart.cpp    		\
+	vibration.cpp  		\
+	cube.cpp       		\
+	data.cpp       		\
 
-disp:
-	$(F90) disp.f90 -o disp.x $(LDFLAGS)
+FSRCS = \
+	anime.f90					\
+	disp.f90					\
+	vibration.f90				\
 
-vibration:
-	$(F90) vibration.f90 -o vibration.x $(LDFLAGS)
+TARGETS = \
+	adjustcube	\
+	test 		\
+	convcheck	\
+	int			\
+	potsurf		\
+	restart		\
+	h2oangle	\
+	anime		\
+	disp		\
+	vibration	\
 
-anime:
-	$(F90) anime.f90 -o anime.x $(LDFLAGS)
+OBJS = $(CXXSRCS:.cpp=.o) $(FSRCS:.f90=.o)
 
-adjust:
-	$(CPP) adjustcube.cpp -o adjustcube.x
+all: $(TARGETS)
 
-potsurf:
-	$(CPP) potsurf.cpp -o potsurf.x
+.f90.o:
+	$(F90) $(FFLAGS) -c $< -o $@
 
-h2oangle:
-	$(CPP) h2oangle.cpp -o h2oangle.x
+.cpp.o:
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-convcheck:
-	$(CPP) convcheck.cpp data.cpp -o convcheck.x
+adjustcube: adjustcube.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+	ln -sf $(abspath $@) $(BINDIR)/$@
 
-restart:
-	$(CPP) restart.cpp data.cpp -o restart.x
+test: test.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+	ln -sf $(abspath $@) $(BINDIR)/$@
 
-test:
-	$(CPP) -O3 test.cpp -o test.x
+test: test.o
 
-clean : 
-	rm *.mod
-	rm *.o
-	rm $(TARGET)
+convcheck: convcheck.o data.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+	ln -sf $(abspath $@) $(BINDIR)/$@
 
-# TODO: Revise this Makefile as follows
+disp : disp.o
+	$(F90) $(FFLAGS) -o $@ $^
+	ln -sf $(abspath $@) $(BINDIR)/$@
 
-INT = integrate_norm.cpp cube.cpp
-INT_OBJ = $(INT:.cpp=.o)
+vibration : vibration.o
+	$(F90) $(FFLAGS) -o $@ $^ $(LDFLAGS)
+	ln -sf $(abspath $@) $(BINDIR)/$@
 
-int: $(INT_OBJ)
-	$(CPP) $(INT_OBJ) -o integrate_norm
+anime : anime.o
+	$(F90) $(FFLAGS) -o $@ $^ $(LDFLAGS)
+	ln -sf $(abspath $@) $(BINDIR)/$@
 
-%.o : %.cpp
-	$(CPP) -c $< -o $@
+potsurf : potsurf.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+	ln -sf $(abspath $@) $(BINDIR)/$@
 
+h2oangle : h2oangle.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+	ln -sf $(abspath $@) $(BINDIR)/$@
+
+restart : restart.o data.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+	ln -sf $(abspath $@) $(BINDIR)/$@
+
+int : integrate_norm.o cube.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+	ln -sf $(abspath $@) $(BINDIR)/$@
+
+clean:
+	-rm $(BINDIR)/*
+	-rm $(TARGETS)
+	-rm $(OBJS)
