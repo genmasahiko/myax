@@ -10,6 +10,7 @@ program disp
         real(dp) :: dx 
         integer :: i, j, k, nat
         logical :: lfcp, tprnfor
+        character(10) :: calculation
         character(100) :: dum1, dum2
 
         write(*,*) 'relax input & output file name?'
@@ -20,21 +21,30 @@ program disp
         allocate( asym(nat), apos(nat,3) )
         call read_output(output, nat, asym, apos)
 
-        lfcp = .false. ; tprnfor = .false.
-        call check_fcp_tprnfor(input, lfcp, tprnfor)
+        lfcp = .false.
+        tprnfor = .false.
+        calculation = ''
+        call check_some_condition(input, lfcp, tprnfor, calculation)
 
-        write(*,*) lfcp, tprnfor
+        write(*,*) 'lfcp: ', lfcp
+        write(*,*) 'tprnfor: ', tprnfor
+        if ( calculation == '' ) then
+                write(*,*) 'calculation is None; Is this neb input?'
+        else
+                write(*,*) 'calculation: ', calculation
+        end if
+        write(*,*)
 
-        do i = 1, nat
-                write(*, '(a, 3f20.10)') asym(i), ( apos(i, j), j = 1, 3 )
-        end do
+        !do i = 1, nat
+        !        write(*, '(a, 3f20.10)') asym(i), ( apos(i, j), j = 1, 3 )
+        !end do
 
         write(*,*) 'H2O shift for finite difference?'
         read(*,*) dx
 
         ! making 'vib' directory
 
-        call system('mkdir vib')
+        call system('mkdir -p vib')
 
         ! plus diff
         k = 0
@@ -45,11 +55,11 @@ program disp
                         new_input_dir = 'vib/disp_'//trim(adjustl(new_input_dir))//'+'
                         new_input = trim(adjustl(new_input_dir))//'/in'
 
-                        call system('mkdir ' //new_input_dir)
+                        call system('mkdir -p ' //new_input_dir)
 
                         apos(i, j) = apos(i, j) + dx
 
-                        call rewrite_input(input, new_input, asym, apos, nat, lfcp, tprnfor)
+                        call rewrite_input(input, new_input, asym, apos, nat, lfcp, tprnfor, calculation)
 
                         apos(i, j) = apos(i, j) - dx
                 end do
@@ -63,11 +73,11 @@ program disp
                         new_input_dir = 'vib/disp_'//trim(adjustl(new_input_dir))//'-'
                         new_input = trim(adjustl(new_input_dir))//'/in'
 
-                        call system('mkdir ' //new_input_dir)
+                        call system('mkdir -p ' //new_input_dir)
 
                         apos(i, j) = apos(i, j) - dx
 
-                        call rewrite_input(input, new_input, asym, apos, nat, lfcp, tprnfor)
+                        call rewrite_input(input, new_input, asym, apos, nat, lfcp, tprnfor, calculation)
 
                         apos(i, j) = apos(i, j) + dx
                 end do
@@ -119,7 +129,7 @@ contains
 100 close(10)
         end subroutine
 
-        subroutine rewrite_input(relax_input, new_input, atom_symbol, atom_position, nat, lfcp, tprnfor)
+        subroutine rewrite_input(relax_input, new_input, atom_symbol, atom_position, nat, lfcp, tprnfor, calculation)
                 implicit none
 
                 character(100) :: relax_input, new_input, line
@@ -128,6 +138,7 @@ contains
                 character(5) :: direction
                 integer :: i, j, nat
                 logical :: lfcp, tprnfor
+                character(10) :: calculation
 
                 open(10, file=relax_input, status='old')
                 open(11, file=new_input, status='replace')
@@ -155,7 +166,6 @@ contains
                                         end do
                                         exit
                                 end if
-
                         else if ( index(line, 'relax') > 0 .and. (.not. lfcp)) then
                                 write(11, '(a)') " calculation = 'scf'"
 
@@ -188,12 +198,13 @@ contains
                 close(10)
         end function
 
-        subroutine check_fcp_tprnfor(filename, lfcp, tprnfor)
+        subroutine check_some_condition(filename, lfcp, tprnfor, calculation)
                 implicit none
 
                 character(100) :: filename, line
                 integer :: ios
                 logical :: lfcp, tprnfor
+                character(10) :: calculation
 
                 open(10, file=filename, status='old')
 
@@ -205,6 +216,8 @@ contains
                                 lfcp = .true.
                         else if ( index(line, 'tprnfor') > 0 ) then
                                 tprnfor = .true.
+                        else if ( index(line, 'calculation') > 0 ) then
+                                read(line, *) calculation
                         end if
                 end do
 
@@ -212,4 +225,3 @@ contains
         end subroutine
 
 end program
-

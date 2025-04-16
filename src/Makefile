@@ -7,7 +7,6 @@ BINDIR = ../bin
 
 CXXSRCS = \
 	adjustcube.cpp		\
-	test.cpp			\
 	convcheck.cpp  		\
 	h2oangle.cpp   		\
 	integrate_norm.cpp	\
@@ -24,7 +23,6 @@ FSRCS = \
 
 TARGETS = \
 	adjustcube	\
-	test 		\
 	convcheck	\
 	int			\
 	potsurf		\
