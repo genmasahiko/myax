@@ -20,9 +20,16 @@ def generate_input(qe_input, qe_output):
         with open(qe_output, 'r') as fout:
             lines = fout.readlines()
 
-            for i, line in enumerate(lines):
-                if "Begin final coordinates" in line:
-                    new_coords = lines[i+2:i+2+params['system']['nat']+1]
+            # For ion_dynamics = 'damp', The output file format is little bit different
+            if params['ions'].get('ion_dynamics') == 'damp':
+                for i, line in enumerate(lines):
+                    if "Final coordinates" in line:
+                        new_coords = lines[i+9:i+9+params['system']['nat']+1]
+            else:
+                for i, line in enumerate(lines):
+                    if "Begin final coordinates" in line:
+                        new_coords = lines[i+2:i+2+params['system']['nat']+1]
+
 
     charge = 0
 
