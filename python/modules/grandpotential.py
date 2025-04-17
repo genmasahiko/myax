@@ -86,6 +86,13 @@ def generate_input(qe_input, qe_output):
         with open(filename, 'w') as f:
             espresso.write_fortran_namelist(f, input_data = params, binary = 'pw',)
 
+        # This function append the 'EOF' at the end of the file (crazy)
+        # In this program, we have to remove it
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        with open(filename, 'w') as f:
+            f.writelines(lines[:-1])
+
         # Add the new coordinates to the input file
         with open(filename, 'a') as f:
             # The new coordinates is used if the calculation was 'relax'
