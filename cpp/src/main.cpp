@@ -6,6 +6,7 @@
 
 #include "data.h"
 #include "grandpotential.h"
+#include "band.h"
 
 
 int main() {
@@ -14,6 +15,7 @@ int main() {
     while (true) {
         std::cout
             << "      1. Grand potential calculation" << std::endl
+            << "      2. Band structure calculation" << std::endl
             << "      q. Quit" << std::endl
             << "Enter your choice: ";
 
@@ -24,6 +26,10 @@ int main() {
         switch (choice) {
             case '1': {
                 gp::run();
+                return 0;
+            };
+            case '2': {
+                band::run();
                 return 0;
             };
             case 'q': {

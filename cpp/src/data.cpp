@@ -7,6 +7,9 @@
 #include <sstream>
 #include <unordered_map>
 #include <any>
+#include <variant>
+#include <array>
+#include <iomanip>
 
 void Data::SetNat(int n) { 
     nat = n;
@@ -34,8 +37,40 @@ void Data::SetRestartmode(std::string mode) {
     restartmode = mode;
 }
 
-void Data::SetParam( std::unordered_map<std::string, std::any> param ) {
+void Data::SetParam( std::unordered_map< std::string, std::unordered_map< std::string, std::string > > param ) {
     params = param;
+}
+
+void Data::SetPseudo( std::string symbol, float mass, std::string name) {
+    Pseudo new_pseudo(symbol, mass, name);
+    pseudos_.push_back(new_pseudo);
+}
+
+void Data::SetKpoints( const std::string& style, const std::array<int, 3>& nk, const std::array<int, 3>& sk) {
+    kpoints.style = style;
+    kpoints.nk = nk;
+    kpoints.sk = sk;
+}
+
+void Data::SetCell( const std::string& style, const std::vector< std::vector<double> >& v) {
+    cell.style = style;
+    cell.v = v;
+}
+
+void Data::SetParam( const std::string& section, const std::string& key, const std::string& value ) {
+    params[section][key] = value;
+}
+
+void Data::SetKpoints4bands(
+        const std::string& style,
+        const int& nks,
+        const std::vector< std::vector<float> >& xk,
+        const std::vector<float>& wk
+        ) {
+    kpoints.style = style;
+    kpoints.nks = nks;
+    kpoints.xk = xk;
+    kpoints.wk = wk;
 }
 
 int Data::GetNat() { 
@@ -58,17 +93,14 @@ std::string Data::GetRestartmode() {
     return restartmode;
 }
 
-// It will be revised and used.
-//
-//template <typename T> 
-//T Data::GetParam( std::string key ) {
-//    T value;
-//    if ( decltype(value) == params[key].type() ) {
-//        return std::any_cast<T>(params[key]);
-//    } else {
-//        std::cerr << "Error: The type of the parameter is not " << typeid(T).name() << std::endl;
-//    }
-//}
+std::string Data::GetParam( const std::string& section, const std::string& key ) {
+    if (params.find(section) != params.end() && params[section].find(key) != params[section].end()) {
+        return params[section][key];
+    } else {
+        std::cerr << "Error: Parameter not found: " << section << " -> " << key << std::endl;
+        return "";
+    }
+}
 
 std::string GetStringParam( std::string line ) {
     int start = line.find("'") + 1;
@@ -76,18 +108,44 @@ std::string GetStringParam( std::string line ) {
     return line.substr(start, end - start);
 }
 
+std::string Trim( std::string str ) {
+    str.erase(0, str.find_first_not_of(" \t\n\r\f\v"));
+    str.erase(str.find_last_not_of(" \t\n\r\f\v") + 1);
+    return str;
+}
+
+std::string ExtractInnerString( std::string str ) {
+    // Find the first '(', '{', or '['
+    size_t start = str.find_first_of("({[");
+    if (start == std::string::npos) {
+        return ""; // No opening bracket found
+    }
+
+    // Find the matching ')', '}', or ']'
+    size_t end = str.find_first_of(")}]", start);
+    if (end == std::string::npos) {
+        return ""; // No closing bracket found
+    }
+    // Extract the substring between the brackets
+    std::string inner = str.substr(start + 1, end - start - 1);
+    return inner;
+}
+
 Data Data::ReadInfile(std::ifstream &file) {
 
     Data in;
     std::string line;
 
-    std::unordered_map<std::string, std::any> param;
+    //using ParamType = std::variant< int, double, std::string >;
+
+    std::unordered_map<std::string, std::unordered_map<std::string, std::string> > param;
     std::string calculation;
     std::string restartmode;
 
+
     while (std::getline(file, line)) {
         if (line.find("calculation") != std::string::npos) {
-            param["calculation"] = GetStringParam(line);
+            param["control"]["calculation"] = GetStringParam(line);
             break;
         }
 
@@ -110,20 +168,106 @@ Data Data::ReadInfile(std::ifstream &file) {
             }
 
         }
-    } else {
-        std::cerr << "Error: Function ReadInfile do not ready for calculation except NEB."
-            << std::endl;
     }
 
-    //in.SetCalculation(calculation);
+    std::string section;
+
+    while (std::getline(file, line)) {
+        line = Trim(line);
+        if ( line.empty() || line == "/" ) continue;
+
+        if ( line.find("&") != std::string::npos ) {
+            section = line.substr(1);
+
+        } else if (line.find("ATOMIC_SPECIES") != std::string::npos) {
+            for ( int i = 0; i < std::stoi(param["system"]["ntyp"]) ; i++ ) {
+                std::getline(file, line);
+                std::istringstream iss(line);
+                std::string symbol;
+                float mass;
+                std::string name;
+
+                iss >> symbol >> mass >> name;
+
+                in.SetPseudo(symbol, mass, name);
+            }
+
+        } else if (line.find("K_POINTS") != std::string::npos) {
+            std::istringstream iss(line);
+            std::string dum, style;
+            iss >> dum >> style;
+
+            style = ExtractInnerString(style);
+
+            if ( style == "automatic" ) {
+                std::getline(file, line);
+                std::istringstream iss(line);
+                std::array<int, 3> nk, sk;
+
+                iss >> nk[0] >> nk[1] >> nk[2];
+                iss >> sk[0] >> sk[1] >> sk[2];
+
+                in.SetKpoints(style, nk, sk);
+            }
+
+        } else if (line.find("CELL_PARAMETERS") != std::string::npos) {
+            std::istringstream iss(line);
+            std::string dum, style;
+            iss >> dum >> style;
+
+            style = ExtractInnerString(style);
+
+            std::vector< std::vector<double> > v;
+
+            for (int i = 0; i < 3; i++) {
+                std::getline(file, line);
+                std::istringstream iss(line);
+                std::vector<double> vec(3);
+                iss >> vec[0] >> vec[1] >> vec[2];
+                v.push_back(vec);
+            }
+
+            in.SetCell(style, v);
+
+        } else if (line.find("ATOMIC_POSITIONS") != std::string::npos) {
+            std::istringstream iss(line);
+            std::string dum, style;
+            iss >> dum >> style;
+
+            style = ExtractInnerString(style);
+
+            int nat = std::stoi(param["system"]["nat"]);
+
+            for (int i = 0; i < nat; i++) {
+                std::getline(file, line);
+                std::istringstream iss(line);
+                std::string symbol;
+                std::vector<double> pos(3);
+                std::vector<int> ifpos(3);
+
+                iss >> symbol >> pos[0] >> pos[1] >> pos[2] >> ifpos[0] >> ifpos[1] >> ifpos[2];
+
+                in.SetAtom(symbol, pos, ifpos);
+            }
+
+        } else {
+            if (line.find("=") == std::string::npos) {
+                continue;
+            }
+            std::string key = Trim( line.substr(0, line.find("=")) );
+            std::string value = Trim( line.substr(line.find("=") + 1) );
+            param[section][key] = value;
+        }
+        
+    }
+
     in.SetParam(param);
-    in.SetRestartmode(restartmode);
 
     file.clear();
     file.seekg(0, std::ios::beg);
 
     return in;
-}
+};
 
 Data Data::ReadOutfile(std::ifstream &file) {
 
@@ -240,3 +384,57 @@ Data Data::ReadOutfile(std::ifstream &file) {
     return out;
 }
 
+void Data::WriteBandInfile (std::ofstream& file) {
+
+    std::vector< std::string > section_order = {
+        "control",
+        "system",
+        "electrons",
+    };
+    
+    for ( const auto& section : section_order ) {
+        file << "&" << section << std::endl;
+        for ( const auto& [key, value] : params[section] ) {
+            file << " " << key << " = " << value << std::endl;
+        }
+        file << "/" << std::endl;
+    }
+
+    file << "\nATOMIC_SPECIES" << std::endl;
+    for ( const auto& pseudo : pseudos_ ) {
+        file << std::setw(3) << std::left << pseudo.symbol
+             << std::setw(5) << std::left << pseudo.mass
+             << std::left << pseudo.name
+             << std::endl;
+    }
+
+    file << "\nK_POINTS " << "(" << kpoints.style  << ")" << std::endl;
+    file << kpoints.nks << std::endl;
+    for ( int i = 0; i < kpoints.nks; i++ ) {
+        file << std::fixed << std::setprecision(5) << std::setw(10) << std::right << kpoints.xk[i][0]
+             << std::fixed << std::setprecision(5) << std::setw(10) << std::right << kpoints.xk[i][1]
+             << std::fixed << std::setprecision(5) << std::setw(10) << std::right << kpoints.xk[i][2]
+             << std::fixed << std::setprecision(5) << std::setw(10) << std::right << kpoints.wk[i]
+             << std::endl;
+    }
+
+    file << "\nCELL_PARAMETERS " << "(" << cell.style  << ")" << std::endl;
+    for ( int i = 0; i < 3; i++ ) {
+        file << std::fixed << std::setprecision(9) << std::setw(14) << std::right << cell.v[i][0]
+             << std::fixed << std::setprecision(9) << std::setw(14) << std::right << cell.v[i][1]
+             << std::fixed << std::setprecision(9) << std::setw(14) << std::right << cell.v[i][2]
+             << std::endl;
+    }
+
+    std::string nat = params["system"]["nat"];
+
+    file << "\nATOMIC_POSITIONS " << "(" << "angstrom"  << ")" << std::endl;
+    for ( int i = 0; i < std::stoi(nat); i++ ) {
+        file << std::setw(3) << std::left << atoms[i].symbol
+             << std::fixed << std::setprecision(9) << std::setw(14) << std::right << atoms[i].pos[0]
+             << std::fixed << std::setprecision(9) << std::setw(14) << std::right << atoms[i].pos[1]
+             << std::fixed << std::setprecision(9) << std::setw(14) << std::right << atoms[i].pos[2]
+             << std::endl;
+    }
+    
+}

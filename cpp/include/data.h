@@ -5,6 +5,8 @@
 #include <sstream>
 #include <any>
 #include <unordered_map>
+#include <variant>
+#include <array>
 
 #pragma once
 
@@ -22,16 +24,30 @@
 // - force:     3D vector defining the force acting on the atom
 //
 
+
 class Data {
 public:
+    // using ParamType = std::variant< int, double, std::string >;
 
     // Following three functions are mainly used in the ReadOutfile
     void SetNat(int n); 
     void SetNtyp(int n);
-    void SetAtom( std::string symbol, std::vector<double> pos, std::vector<int> ifpos, std::vector<double> force);
+    void SetAtom( std::string symbol, std::vector<double> pos, std::vector<int> ifpos, std::vector<double> force = {});
     void SetCalculation(std::string calc);
     void SetRestartmode(std::string mode);
-    void SetParam( std::unordered_map<std::string, std::any> param );
+    void SetParam( std::unordered_map<std::string, std::unordered_map<std::string, std::string>> param );
+    void SetPseudo( std::string symbol, float mass, std::string name );
+    void SetKpoints( const std::string& style, const std::array<int, 3>& nk, const std::array<int, 3>& sk );
+    void SetCell( const std::string& style, const std::vector< std::vector<double> >& v );
+
+    void SetParam( const std::string& section, const std::string& key, const std::string& value );
+
+    void SetKpoints4bands(
+            const std::string& style,
+            const int& nks,
+            const std::vector< std::vector<float> >& xk,
+            const std::vector<float>& wk
+            );
 
     // Use these functions to get the data
     int GetNat(); 
@@ -40,12 +56,13 @@ public:
     std::string GetCalculation();
     std::string GetRestartmode();
 
-    template <typename T>
-    T GetParam( std::string key );
+    std::string GetParam( const std::string& section, const std::string& key );
 
     // Read the io file of QuantumESPRESSO
     Data ReadInfile( std::ifstream &file );
     Data ReadOutfile( std::ifstream &file );
+
+    void WriteBandInfile( std::ofstream &file );
 
 private:
 
@@ -57,7 +74,7 @@ private:
         std::vector<double> force;
     };
 
-    std::vector<Data::Atom> atoms;
+    std::vector<Atom> atoms;
 
     int nat;
     int ntyp;
@@ -65,6 +82,39 @@ private:
     std::string calculation;
     std::string restartmode;
 
-    std::unordered_map<std::string, std::any> params;
+    class Pseudo {
+    public:
+        std::string symbol;
+        float mass;
+        std::string name;
+        
+        Pseudo( std::string s, float m, std::string n ):
+            symbol( std::move(s) ), mass( std::move(m) ), name( std::move(n) ) {}
+    };
+
+    std::vector<Pseudo> pseudos_;
+
+    class Kpoints {
+    public:
+        std::string style;
+        std::array<int, 3> nk;
+        std::array<int, 3> sk;
+
+        int nks;
+        std::vector< std::vector<float> > xk;
+        std::vector<float> wk;
+    };
+
+    Kpoints kpoints;
+
+    class Cell {
+    public:
+        std::string style;
+        std::vector< std::vector<double> > v;
+    };
+
+    Cell cell;
+    
+    std::unordered_map<std::string, std::unordered_map< std::string, std::string > > params;
 
 };
