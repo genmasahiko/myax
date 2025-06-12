@@ -1,5 +1,6 @@
 #include "data.h"
 
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -10,6 +11,7 @@
 #include <variant>
 #include <array>
 #include <iomanip>
+#include <numeric>
 
 void Data::SetNat(int n) { 
     nat = n;
@@ -382,6 +384,80 @@ Data Data::ReadOutfile(std::ifstream &file) {
     file.seekg(0, std::ios::beg);
 
     return out;
+}
+
+Data Data::ReadPoscar(std::ifstream &file) {
+    Data poscar;
+    std::string line;
+
+
+    if (file.is_open()) {
+        // Skip header lines
+        for (int i = 0; i < 2; ++i) {
+            std::getline(file, line);
+        }
+
+        // Read the cell parameters
+        std::vector< std::vector<double> > cellvec;
+        for (int i = 0; i < 3; ++i) {
+            std::getline(file, line);
+            std::istringstream iss(line);
+            std::vector<double> vec(3);
+            iss >> vec[0] >> vec[1] >> vec[2];
+            cellvec.push_back(vec);
+        }
+        poscar.SetCell("", cellvec);
+
+        // Read the atom symbols and set the Ntyp
+        std::vector<std::string> symbol;
+        std::getline(file, line);
+        std::istringstream iss(line);
+        std::string s;
+        while (iss >> s) {
+            symbol.push_back(s);
+        }
+        poscar.SetNtyp(symbol.size());
+
+        // Read the number of atoms and set the Nat
+        std::vector<int> nat;
+        std::getline(file, line);
+        iss.clear();
+        iss.str(line);
+        int n;
+        while (iss >> n) {
+            nat.push_back(n);
+        }
+        poscar.SetNat(std::accumulate(nat.begin(), nat.end(), 0));
+
+        // Set the symbol array
+        std::vector<std::string> symbols;
+        for (int i = 0; i < symbol.size(); ++i) {
+            for (int j = 0; j < nat[i]; ++j) {
+                symbols.push_back(symbol[i]);
+            }
+        }
+
+        // Check if the coordinates are Cartesian
+        std::getline(file, line);
+        if (line.find("Cartesian") != std::string::npos) {
+            std::cerr << "Only Cartesian coordinates are supported." << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+
+        // Read the atomic positions
+        int i = 0;
+        while ( std::getline(file, line) ) {
+            std::istringstream iss(line);
+
+            std::vector<double> pos(3);
+            iss >> pos[0] >> pos[1] >> pos[2];
+
+            poscar.SetAtom(symbols[i], pos);
+            i++;
+        }
+    }
+
+    return poscar;
 }
 
 void Data::WriteBandInfile (std::ofstream& file) {

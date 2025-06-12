@@ -1,5 +1,5 @@
 F90	= gfortran
-CXX	= /opt/homebrew/bin/g++-14
+CXX	= /opt/homebrew/bin/g++-15
 LAPACK_DIR = /opt/homebrew/opt/lapack/lib
 LDFLAGS	= -L${LAPACK_DIR} -llapack
 

@@ -1,11 +1,10 @@
 // This program check which of the programs to be run
-//
-
 
 #include <iostream>
 
 #include "data.h"
 #include "grandpotential.h"
+#include "h2oangle.h"
 #include "band.h"
 
 
@@ -16,6 +15,7 @@ int main() {
         std::cout
             << "      1. Grand potential calculation" << std::endl
             << "      2. Band structure calculation" << std::endl
+            << "      3. H2O angle calculation" << std::endl
             << "      q. Quit" << std::endl
             << "Enter your choice: ";
 
@@ -30,6 +30,10 @@ int main() {
             };
             case '2': {
                 band::run();
+                return 0;
+            };
+            case '3': {
+                angle::run();
                 return 0;
             };
             case 'q': {

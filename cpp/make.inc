@@ -1,4 +1,4 @@
-CXX	= /opt/homebrew/bin/g++-14
+CXX	= /opt/homebrew/bin/g++-15
 
 #for cygnus, pegasus
 #CXX = icpc

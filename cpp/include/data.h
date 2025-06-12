@@ -32,7 +32,7 @@ public:
     // Following three functions are mainly used in the ReadOutfile
     void SetNat(int n); 
     void SetNtyp(int n);
-    void SetAtom( std::string symbol, std::vector<double> pos, std::vector<int> ifpos, std::vector<double> force = {});
+    void SetAtom( std::string symbol, std::vector<double> pos, std::vector<int> ifpos = {0, 0, 0}, std::vector<double> force = {});
     void SetCalculation(std::string calc);
     void SetRestartmode(std::string mode);
     void SetParam( std::unordered_map<std::string, std::unordered_map<std::string, std::string>> param );
@@ -58,9 +58,15 @@ public:
 
     std::string GetParam( const std::string& section, const std::string& key );
 
+    //========== Functions to read the files ==========//
+    //
     // Read the io file of QuantumESPRESSO
     Data ReadInfile( std::ifstream &file );
     Data ReadOutfile( std::ifstream &file );
+    //
+    // Read the POSCAR file
+    // Only cartesian coordinates are supported
+    Data ReadPoscar( std::ifstream &file );
 
     void WriteBandInfile( std::ofstream &file );
 

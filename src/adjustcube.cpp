@@ -77,19 +77,54 @@ int main(int argc, char* argv[]) {
         filename = argv[1];
     }
     else if (argc == 3) {
+        // For retrun absolute volume data
+        //
+        // filename = argv[1];
+        // Data data;
+        // LoadCubeFile(filename, data);
+        // for (auto& x : data.vol) {
+        //     for (auto& y : x) {
+        //         for (auto& z : y) {
+        //             z = std::abs(z);
+        //         }
+        //     }
+        // }
+        // WriteCubeFile(argv[2], data);
+
+        // return 1;
+    }
+    else if (argc == 4) {
+        std::string filename2;
+        std::string filename3;
         filename = argv[1];
-        Data data;
-        LoadCubeFile(filename, data);
-        for (auto& x : data.vol) {
-            for (auto& y : x) {
-                for (auto& z : y) {
-                    z = std::abs(z);
+        filename2 = argv[2];
+        filename3 = argv[3];
+        Data data1, data2, data3;
+
+        LoadCubeFile(filename, data1);
+        LoadCubeFile(filename2, data2);
+        LoadCubeFile(filename3, data3);
+
+        // Calculate the difference between two cube files
+        int nx = data1.vol.size();
+        int ny = data1.vol[0].size();
+        int nz = data1.vol[0][0].size();
+
+        std::cout << nx << " " << data2.vol.size() << " " << data3.vol.size() << std::endl;
+        std::cout << ny << " " << data2.vol[0].size() << " " << data3.vol[0].size() << std::endl;
+        std::cout << nz << " " << data2.vol[0][0].size() << " " << data3.vol[0][0].size() << std::endl;
+
+        for (int i = 0; i < nx; i++) {
+            for (int j = 0; j < ny; j++) {
+                for (int k = 0; k < nz; k++) {
+                    data1.vol[i][j][k] = data1.vol[i][j][k] - data2.vol[i][j][k] - data3.vol[i][j][k];
                 }
             }
         }
-        WriteCubeFile(argv[2], data);
 
-        return 1;
+        WriteCubeFile("diff.cube", data1);
+
+        return 0;
     }
 
     // std::cout << "Set H2O molecule at..." << std::endl;
