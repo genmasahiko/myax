@@ -79,6 +79,26 @@ int Data::GetNat() {
     return nat;
 }
 
+int Data::GetAtomIndex(std::string symbol, int i) {
+    int count = 0;
+    int index = 0;
+    for (const auto& atom : atoms) {
+        if (atom.symbol == symbol) {
+            if (count == i - 1) {
+                return index;
+            }
+            count++;
+        }
+        index++;
+    }
+    std::cerr << "Error: Atom with symbol '" << symbol << "' not found at index " << i << std::endl;
+    std::exit(EXIT_FAILURE);
+}
+
+std::vector<double> Data::GetAtom(int i) { 
+    return atoms[i].pos;
+}
+
 std::vector<double> Data::GetForce(int i) { 
     return atoms[i].force;
 }
@@ -439,7 +459,7 @@ Data Data::ReadPoscar(std::ifstream &file) {
 
         // Check if the coordinates are Cartesian
         std::getline(file, line);
-        if (line.find("Cartesian") != std::string::npos) {
+        if (line.find("Cartesian") == std::string::npos) {
             std::cerr << "Only Cartesian coordinates are supported." << std::endl;
             std::exit(EXIT_FAILURE);
         }

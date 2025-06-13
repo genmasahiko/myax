@@ -49,8 +49,16 @@ public:
             const std::vector<float>& wk
             );
 
-    // Use these functions to get the data
+    //=================================================//
+    // Funtions to get the data
+    //=================================================//
     int GetNat(); 
+
+    // Get the Atom index of the given symbol
+    // int i means the i-th atom of the given symbol
+    int GetAtomIndex(std::string symbol, int i = 1);
+
+    std::vector<double> GetAtom(int i);
     std::vector<double> GetForce(int i);
     std::vector<int> GetIfpos(int i);
     std::string GetCalculation();
@@ -58,7 +66,9 @@ public:
 
     std::string GetParam( const std::string& section, const std::string& key );
 
-    //========== Functions to read the files ==========//
+    //=================================================//
+    // Functions to read the data from files
+    // ================================================//
     //
     // Read the io file of QuantumESPRESSO
     Data ReadInfile( std::ifstream &file );
