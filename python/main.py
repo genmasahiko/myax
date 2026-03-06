@@ -1,11 +1,13 @@
 from modules import grandpotential
+from modules import profile_vasp
 
 modules = {
-        "1": ("Grandpotential", grandpotential)
+        "1": ("Grandpotential", grandpotential),
+        "2": ("Analyze profiling in VASP", profile_vasp)
         }
 
 def main():
-    print("Hello, This program has some features.")
+    print("Hello, This program has some features.\n")
 
     while True:
         for key, (description, _) in modules.items():
