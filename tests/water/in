@@ -1,0 +1,33 @@
+&control
+    calculation='relax',
+    restart_mode='from_scratch',
+    prefix='H2O',
+    pseudo_dir = '/Users/gen/program/pp/'
+    outdir='./'
+    tprnfor = .TRUE.
+    forc_conv_thr = 3.88938E-05
+ /
+ &system
+    ibrav = 0,
+    nat= 3, ntyp= 2,
+    ecutwfc = 90, ecutrho = 720,
+    occupations='smearing', smearing='mp', degauss=0.03,
+    assume_isolated = 'esm', esm_bc='pbc'
+ /
+ &electrons
+    mixing_beta = 0.3
+ /
+ &ions
+ /
+ATOMIC_SPECIES
+ H  1.00794  H.pbe-kjpaw_psl.1.0.0.UPF
+ O  55.847   O.pbe-n-kjpaw_psl.1.0.0.UPF
+CELL_PARAMETERS angstrom
+    10.5835400000    0.0000000000    0.0000000000
+     0.0000000000   10.5835400000    0.0000000000
+     0.0000000000    0.0000000000   12.7002480000
+ATOMIC_POSITIONS angstrom
+O    0.0000000000    5.2917700000    0.0000000000
+H    0.4565612154    4.5618084292    0.4559209112
+H    0.3877322213    6.1004201907    0.3804697962
+K_POINTS gamma

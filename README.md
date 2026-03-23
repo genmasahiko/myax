@@ -26,3 +26,8 @@ bin/myax
 ```
 
 If `ase` or `numpy` is missing, the program will stop with a short message telling the user to activate the environment first. <br>
+
+## Available Python features
+
+`bin/myax` includes a converter from Quantum ESPRESSO input/output files to POSCAR-format `.vasp` files. <br>
+When `assume_isolated = 'esm'` is used, the converter shifts atomic positions by half a cell along the fractional z direction before writing the POSCAR file. <br>

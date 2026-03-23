@@ -6,7 +6,8 @@ import sys
 modules = {
         "1": ("Grandpotential", "myax.modules.grandpotential"),
         "2": ("Analyze profiling in VASP", "myax.modules.profile_vasp"),
-        "3": ("Analyze water POSCAR files", "myax.modules.analyze_water_poscars")
+        "3": ("Analyze water POSCAR files", "myax.modules.analyze_water_poscars"),
+        "4": ("Convert QE input/output to POSCAR", "myax.modules.qe_to_poscar")
         }
 
 def main():
