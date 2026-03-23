@@ -1,0 +1,40 @@
+&CONTROL
+   calculation      = 'scf'
+   outdir           = './data'
+   prefix           = 'scf'
+   etot_conv_thr    = 1e-05
+   forc_conv_thr    = 0.0001
+   pseudo_dir       = '/home/EIS00001/gen1127/pseudopotential'
+   lfcp             = .false.
+/
+&SYSTEM
+   ibrav            = 0
+   nat              = 67
+   ntyp             = 3
+   tot_charge       = -2.108377
+   ecutwfc          = 60.0
+   ecutrho          = 480.0
+   nosym            = .true.
+   occupations      = 'smearing'
+   degauss          = 0.01
+   smearing         = 'gauss'
+   input_dft        = 'vdW-DF2-B86R'
+   assume_isolated  = 'esm'
+   esm_bc           = 'bc3'
+/
+&ELECTRONS
+   electron_maxstep = 300
+   conv_thr         = 1e-08
+   mixing_beta      = 0.3
+/
+&IONS
+   upscale          = 1.0
+/
+&CELL
+/
+&FCP
+   fcp_mu           = -4.1184
+/
+&RISM
+/
+EOF

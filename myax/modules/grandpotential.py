@@ -1,9 +1,19 @@
-from ase.io import read, write, espresso
-import numpy as np
 import os
 from pathlib import Path
 
+
+def _load_dependencies():
+    try:
+        from ase.io import espresso
+    except ModuleNotFoundError as exc:
+        raise SystemExit(
+            "This feature requires ASE. Activate the environment first, for example: conda activate ase"
+        ) from exc
+
+    return espresso
+
 def generate_input(qe_input, qe_output):
+    espresso = _load_dependencies()
 
     # Read the QE input file using ASE
     # params include the 'Namelist', cards include the 'Card' section

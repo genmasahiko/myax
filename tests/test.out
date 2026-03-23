@@ -1,0 +1,42 @@
+
+     Program PWSCF v.6.1 starts on 16Apr2025 at 19:49:54 
+
+     This program is part of the open-source Quantum ESPRESSO suite
+     for quantum simulation of materials; please cite
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 21 395502 (2009);
+          URL http://www.quantum-espresso.org", 
+     in publications or presentations arising from this work. More details at
+     http://www.quantum-espresso.org/quote
+
+     Parallel version (MPI), running on     1 processors
+     Waiting for input...
+     Reading input from standard input
+Warning: card &IONS ignored
+Warning: card    UPSCALE          = 1.0 ignored
+Warning: card / ignored
+Warning: card &CELL ignored
+Warning: card / ignored
+Warning: card &FCP ignored
+Warning: card    FCP_MU           = -4.1184 ignored
+Warning: card / ignored
+Warning: card &RISM ignored
+Warning: card / ignored
+Warning: card EOF ignored
+
+     Current dimensions of program PWSCF are:
+     Max number of different atomic species (ntypx) = 10
+     Max number of k-points (npk) =  40000
+     Max angular momentum in pseudopotentials (lmaxx) =  3
+
+     IMPORTANT: XC functional enforced from input :
+     Exchange-correlation      = VDW-DF2-B86R ( 1  4 26  0 2 0)
+     Any further DFT definition will be discarded
+     Please, verify this is what you really want
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     Error in routine readpp (2):
+     file /home/EIS00001/gen1127/pseudopotential/Pd.pbe-n-rrkjus_psl.1.0.0.UPF not found
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+     stopping ...
