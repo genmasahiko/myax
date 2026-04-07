@@ -7,7 +7,8 @@ modules = {
         "1": ("Grandpotential", "myax.modules.grandpotential"),
         "2": ("Analyze profiling in VASP", "myax.modules.profile_vasp"),
         "3": ("Analyze water POSCAR files", "myax.modules.analyze_water_poscars"),
-        "4": ("Convert QE input/output to POSCAR", "myax.modules.qe_to_poscar")
+        "4": ("Convert QE input/output to POSCAR", "myax.modules.qe_to_poscar"),
+        "5": ("Convert POSCAR between QE and VASP-ESM axes", "myax.modules.convert_poscar_axes")
         }
 
 def main():

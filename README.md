@@ -30,4 +30,9 @@ If `ase` or `numpy` is missing, the program will stop with a short message telli
 ## Available Python features
 
 `bin/myax` includes a converter from Quantum ESPRESSO input/output files to POSCAR-format `.vasp` files. <br>
+If the QE output file is omitted, the converter writes the structure directly from the QE input file. <br>
 When `assume_isolated = 'esm'` is used, the converter shifts atomic positions by half a cell along the fractional z direction before writing the POSCAR file. <br>
+`bin/myax` also includes a POSCAR-to-POSCAR axis converter between the QE convention (surface normal = `z`) and the VASP-ESM convention (surface normal = `x`). <br>
+The converter first detects whether the input is QE or VASP-ESM, prints the detected format, and asks for confirmation before writing the converted file. <br>
+If the surface-normal direction is ambiguous, it asks the user whether the normal is `a1` or `a3`. <br>
+This converter preserves Cartesian geometry and handedness, so it also works when the two in-plane lattice vectors are not orthogonal. <br>
