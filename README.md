@@ -36,3 +36,8 @@ When `assume_isolated = 'esm'` is used, the converter shifts atomic positions by
 The converter first detects whether the input is QE or VASP-ESM, prints the detected format, and asks for confirmation before writing the converted file. <br>
 If the surface-normal direction is ambiguous, it asks the user whether the normal is `a1` or `a3`. <br>
 This converter preserves Cartesian geometry and handedness, so it also works when the two in-plane lattice vectors are not orthogonal. <br>
+`bin/myax` also includes a POSCAR displacement generator for vibrational calculations. <br>
+It uses ASE to generate `eq`, `0x-`, `0x+` style displaced structures and writes one `POSCAR` file into each output subdirectory. <br>
+The displacement magnitude can be passed by `--delta` or entered interactively. <br>
+`bin/myax` can also check finite-difference forces after SCF calculations in those displaced directories. <br>
+It reads `OUTCAR` for VASP or `out` for Quantum ESPRESSO, computes forces from total-energy differences, and compares them with the forces in `eq`. <br>
