@@ -273,23 +273,52 @@ def compare_forces(root: Path) -> list[ForceComparison]:
 
 
 def print_report(comparisons: list[ForceComparison], threshold: float) -> None:
-    print("atom(0) atom(1) dir       F_eq(eV/A)       F_fd(eV/A)         diff(eV/A)     abs(diff)")
-    print("-" * 91)
-    for item in comparisons:
-        print(
-            f"{item.atom_index:7d} {item.atom_index + 1:7d} {item.direction:>3s} "
-            f"{item.eq_force:16.8f} {item.fd_force:16.8f} {item.diff:16.8f} {item.abs_diff:13.8f}"
-        )
+    print("Finite-difference force check matrices (atom rows x Cartesian columns)")
+    print()
+    _print_matrix("F_eq (eV/Angstrom)", comparisons, "eq_force")
+    print()
+    _print_matrix("F_fd from energy differences (eV/Angstrom)", comparisons, "fd_force")
+    print()
+    _print_matrix("F_fd - F_eq (eV/Angstrom)", comparisons, "diff")
+    print()
 
     worst = max(comparisons, key=lambda item: item.abs_diff)
     status = "PASS" if worst.abs_diff <= threshold else "FAIL"
-    print("-" * 91)
     print(
         f"Max abs diff: {worst.abs_diff:.8e} eV/Angstrom "
         f"at atom {worst.atom_index} ({worst.atom_index + 1}), dir {worst.direction}"
     )
     print(f"Threshold: {threshold:.8e} eV/Angstrom")
     print(f"Result: {status}")
+
+
+def _print_matrix(title: str, comparisons: list[ForceComparison], value_name: str) -> None:
+    matrix = _comparison_matrix(comparisons, value_name)
+
+    print(title)
+    print(f"{'atom(0)':>8s} {'atom(1)':>8s} {'x':>16s} {'y':>16s} {'z':>16s}")
+    print("-" * 70)
+    for atom_index in sorted(matrix):
+        row = matrix[atom_index]
+        print(
+            f"{atom_index:8d} {atom_index + 1:8d} "
+            f"{_format_matrix_value(row.get('x')):>16s} "
+            f"{_format_matrix_value(row.get('y')):>16s} "
+            f"{_format_matrix_value(row.get('z')):>16s}"
+        )
+
+
+def _comparison_matrix(comparisons: list[ForceComparison], value_name: str) -> dict[int, dict[str, float]]:
+    matrix: dict[int, dict[str, float]] = {}
+    for item in comparisons:
+        matrix.setdefault(item.atom_index, {})[item.direction] = float(getattr(item, value_name))
+    return matrix
+
+
+def _format_matrix_value(value: float | None) -> str:
+    if value is None:
+        return ""
+    return f"{value:.8f}"
 
 
 def _force_component(result: ScfResult, atom_index: int, axis: int, output_path: Path) -> float:

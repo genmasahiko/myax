@@ -130,6 +130,8 @@ Forces acting on atoms (cartesian axes, Ry/au):
                     main()
 
         self.assertTrue(csv_path.exists())
+        self.assertIn("atom rows x Cartesian columns", stdout.getvalue())
+        self.assertIn("F_fd - F_eq", stdout.getvalue())
         self.assertIn("Result: PASS", stdout.getvalue())
         self.assertIn("atom_index_0,atom_index_1,direction", csv_path.read_text(encoding="utf-8"))
 
