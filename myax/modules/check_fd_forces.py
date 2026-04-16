@@ -73,6 +73,27 @@ def find_output_file(directory: Path) -> Path:
     raise SystemExit(f"SCF output file was not found in {directory} (expected OUTCAR or out).")
 
 
+def read_structure_positions(directory: Path) -> list[list[float]]:
+    read = _load_ase_io()
+    poscar_path = directory / "POSCAR"
+    if poscar_path.exists():
+        try:
+            atoms = read(poscar_path, format="vasp")
+        except Exception as exc:
+            raise SystemExit(f"Failed to read POSCAR with ASE: {poscar_path}: {exc}") from exc
+        return atoms.positions.tolist()
+
+    qe_input_path = directory / "in"
+    if qe_input_path.exists():
+        try:
+            atoms = read(qe_input_path, format="espresso-in")
+        except Exception as exc:
+            raise SystemExit(f"Failed to read QE input with ASE: {qe_input_path}: {exc}") from exc
+        return atoms.positions.tolist()
+
+    raise SystemExit(f"Structure file was not found in {directory} (expected POSCAR or in).")
+
+
 def read_poscar_positions(poscar_path: Path) -> list[list[float]]:
     if not poscar_path.exists():
         raise SystemExit(f"POSCAR file was not found: {poscar_path}")
@@ -229,7 +250,7 @@ def compare_forces(root: Path) -> list[ForceComparison]:
 
     eq_output = find_output_file(eq_dir)
     eq_result = read_scf_result(eq_output)
-    eq_positions = read_poscar_positions(eq_dir / "POSCAR")
+    eq_positions = read_structure_positions(eq_dir)
 
     comparisons: list[ForceComparison] = []
     pairs = collect_displacement_pairs(root)
@@ -246,12 +267,12 @@ def compare_forces(root: Path) -> list[ForceComparison]:
         plus_result = read_scf_result(find_output_file(plus_dir))
 
         axis = DIRECTION_INDEX[direction]
-        minus_positions = read_poscar_positions(minus_dir / "POSCAR")
-        plus_positions = read_poscar_positions(plus_dir / "POSCAR")
+        minus_positions = read_structure_positions(minus_dir)
+        plus_positions = read_structure_positions(plus_dir)
         if atom_index >= len(eq_positions):
-            raise SystemExit(f"Atom index {atom_index} is outside eq/POSCAR atom list.")
+            raise SystemExit(f"Atom index {atom_index} is outside eq structure atom list.")
         if atom_index >= len(minus_positions) or atom_index >= len(plus_positions):
-            raise SystemExit(f"Atom index {atom_index} is outside displaced POSCAR atom list.")
+            raise SystemExit(f"Atom index {atom_index} is outside displaced structure atom list.")
 
         displacement_width = plus_positions[atom_index][axis] - minus_positions[atom_index][axis]
 

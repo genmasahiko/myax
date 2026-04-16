@@ -49,6 +49,34 @@ Cartesian
      0.010000000         0.000000000         0.000000000
 """
 
+QE_IN_EQ = """&control
+ calculation = 'scf'
+/
+&system
+ ibrav = 0
+ nat = 1
+ ntyp = 1
+/
+ATOMIC_SPECIES
+ H 1.0 H.UPF
+CELL_PARAMETERS angstrom
+ 5.0000000000 0.0000000000 0.0000000000
+ 0.0000000000 5.0000000000 0.0000000000
+ 0.0000000000 0.0000000000 5.0000000000
+ATOMIC_POSITIONS angstrom
+H 0.0000000000 0.0000000000 0.0000000000
+K_POINTS gamma
+"""
+
+QE_IN_MINUS = QE_IN_EQ.replace(
+    "H 0.0000000000 0.0000000000 0.0000000000",
+    "H -0.0100000000 0.0000000000 0.0000000000",
+)
+QE_IN_PLUS = QE_IN_EQ.replace(
+    "H 0.0000000000 0.0000000000 0.0000000000",
+    "H 0.0100000000 0.0000000000 0.0000000000",
+)
+
 
 def vasp_outcar(energy: float, fx: float = 0.0, fy: float = 0.0, fz: float = 0.0) -> str:
     return f""" free  energy   TOTEN  =      {energy: .8f} eV
@@ -56,6 +84,14 @@ def vasp_outcar(energy: float, fx: float = 0.0, fy: float = 0.0, fz: float = 0.0
  -----------------------------------------------------------------------------------
    0.00000000  0.00000000  0.00000000   {fx: .8f}  {fy: .8f}  {fz: .8f}
  -----------------------------------------------------------------------------------
+"""
+
+
+def qe_out(energy_ry: float, fx_ry_bohr: float = 0.0) -> str:
+    return f"""!    total energy              =      {energy_ry: .12f} Ry
+Forces acting on atoms (cartesian axes, Ry/au):
+
+     atom    1 type  1   force =     {fx_ry_bohr: .8f}    0.00000000    0.00000000
 """
 
 
@@ -80,8 +116,33 @@ class CheckFdForcesTest(unittest.TestCase):
             (directory / "OUTCAR").write_text(vasp_outcar(energy, fx=force), encoding="utf-8")
         return root
 
+    def _make_qe_tree(self) -> Path:
+        root = self.workdir / "qevib"
+        for dirname, qe_input, energy_ry, force in [
+            ("eq", QE_IN_EQ, -1.0, 0.2 / RY_PER_BOHR_TO_EV_PER_ANGSTROM),
+            ("0x-", QE_IN_MINUS, -1.0, 0.0),
+            ("0x+", QE_IN_PLUS, -1.0 - 0.004 / RY_TO_EV, 0.0),
+        ]:
+            directory = root / dirname
+            directory.mkdir(parents=True)
+            (directory / "in").write_text(qe_input, encoding="utf-8")
+            (directory / "out").write_text(qe_out(energy_ry, force), encoding="utf-8")
+        return root
+
     def test_compare_forces_uses_poscar_displacement_width(self) -> None:
         root = self._make_vasp_tree()
+
+        comparisons = compare_forces(root)
+
+        self.assertEqual(len(comparisons), 1)
+        self.assertEqual(comparisons[0].atom_index, 0)
+        self.assertEqual(comparisons[0].direction, "x")
+        self.assertAlmostEqual(comparisons[0].eq_force, 0.2)
+        self.assertAlmostEqual(comparisons[0].fd_force, 0.2)
+        self.assertAlmostEqual(comparisons[0].abs_diff, 0.0)
+
+    def test_compare_forces_uses_qe_input_displacement_width(self) -> None:
+        root = self._make_qe_tree()
 
         comparisons = compare_forces(root)
 

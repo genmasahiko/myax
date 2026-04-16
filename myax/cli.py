@@ -9,7 +9,7 @@ modules = {
         "3": ("Analyze water POSCAR files", "myax.modules.analyze_water_poscars"),
         "4": ("Convert QE input/output to POSCAR", "myax.modules.qe_to_poscar"),
         "5": ("Convert POSCAR between QE and VASP-ESM axes", "myax.modules.convert_poscar_axes"),
-        "6": ("Generate displaced POSCARs for vibrations", "myax.modules.generate_vasp_displacements"),
+        "6": ("Generate displaced inputs for vibrations", "myax.modules.generate_vasp_displacements"),
         "7": ("Check finite-difference forces from SCF energies", "myax.modules.check_fd_forces")
         }
 
